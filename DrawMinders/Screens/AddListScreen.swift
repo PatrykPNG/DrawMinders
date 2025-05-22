@@ -1,19 +1,30 @@
 //
-//  AddListView.swift
+//  AddListScreen.swift
 //  Reminders_Pencil
 //
 //  Created by Patryk Ostrowski on 18/05/2025.
 //
 
 import SwiftUI
+import SwiftData
 
-struct AddListView: View {
+struct AddListScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
-    @State private var selectedSymbol: String = "list.bullet.circle.fill"
-    @State private var selectedColor: Color = .blue
-    @State private var listName = ""
+    var existingList: MyList?
+    
+    @State private var selectedSymbol: String
+    @State private var selectedColor: Color
+    @State private var listName: String
+    
+    init(existingList: MyList? = nil) {
+        self.existingList = existingList
+        
+        _selectedSymbol = State(initialValue: existingList? .symbol ?? "list.bullet.circle.fill")
+        _selectedColor = State(initialValue: Color(hex: existingList?.hexColor ?? "#007AFF"))
+        _listName = State(initialValue: existingList? .name ?? "")
+    }
     
     var body: some View {
         Form {
@@ -35,7 +46,7 @@ struct AddListView: View {
             }
             
             Section {
-                SFSymbolSelection(selectedSymbol: $selectedSymbol)
+                SymbolSelectionView(selectedSymbol: $selectedSymbol)
             }
         }
         .navigationTitle("New list")
@@ -47,20 +58,37 @@ struct AddListView: View {
                 }
             }
                 
-//                ToolbarItem(placement: .topBarTrailing) {
-//                    Button("Done") {
-//                        let myList = MyList(name: listName)
-//                        context.insert(myList)
-//                        dismiss()
-//                    }
-//                }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Done") {
+                    save()
+                }
+                .disabled(listName.isEmpty)
             }
+        }
+    }
+    
+    private func save() {
+        if let existingList {
+            existingList.name = listName
+            existingList.hexColor = selectedColor.toHexString() ?? "#007AFF"
+            existingList.symbol = selectedSymbol
+        } else {
+            let newList = MyList(
+                name: listName,
+                hexColor: selectedColor.toHexString() ?? "#007AFF",
+                symbol: selectedSymbol
+            )
+            modelContext.insert(newList)
+        }
+        
+        try? modelContext.save()
+        dismiss()
     }
 }
 
-#Preview {
+#Preview { @MainActor in
     NavigationStack {
-        AddListView()
-            .modelContainer(SampleData.shared.modelContainer)
+        AddListScreen()
     }
+    .modelContainer(mockPreviewConteiner)
 }

@@ -6,13 +6,83 @@
 //
 
 import SwiftUI
+import SwiftData
+
+import SwiftUI
+import SwiftData
 
 struct ListDetailScreen: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+
+    @Environment(\.modelContext) private var modelContext
+
+    let myList: MyList
+    @State private var reminderTitle: String = ""
+    @State private var isReminderAlertPresented: Bool = false
+    @State private var selectedReminderId: PersistentIdentifier? = nil
+    
+
+    // .filter { !$0.isCompleted }
+var body: some View {
+    VStack {
+        List(myList.reminders) { reminder in
+            ReminderRowView(
+                reminder: reminder,
+                selectedReminderId: $selectedReminderId
+            )
+            .swipeActions {
+                Button(role: .destructive) {
+                    deleteReminder(reminder)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+
+        Spacer()
+
+        Button {
+            isReminderAlertPresented = true
+        } label: {
+            Image(systemName: "plus.circle.fill")
+            Text("Reminder")
+                .foregroundStyle(.blue)
+                .fontWeight(.bold)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        }
+        .navigationTitle(myList.name)
+        .alert("New Reminder", isPresented: $isReminderAlertPresented) {
+            TextField("reminder title", text: $reminderTitle)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                let reminder = Reminder(title: reminderTitle)
+                myList.reminders.append(reminder)
+                reminderTitle = ""
+            }
+        }
+    }
+    
+    private func deleteReminder(_ reminder: Reminder) {
+        modelContext.delete(reminder)
+        try? modelContext.save()
     }
 }
 
-#Preview {
-    ListDetailScreen()
+
+
+struct MyListDetailScreenContainer: View {
+
+    @Query private var myLists: [MyList]
+
+    var body: some View {
+        ListDetailScreen(myList: myLists[0])
+    }
+}
+
+#Preview { @MainActor in
+    NavigationStack {
+        MyListDetailScreenContainer()
+    }
+    .modelContainer(mockPreviewConteiner)
 }

@@ -6,47 +6,119 @@
 //
 
 import SwiftUI
+import SwiftData
 
-struct listsView: View {
-    let lists = ["domowe", "cwiczenia", "zakupy"]
+enum ListSheet: Identifiable {
+    case new
+    case edit(MyList)
+    
+    var id: String {
+        switch self {
+        case .new:
+            return "new"
+        case .edit(let list):
+            return "edit_\(list.persistentModelID)"
+        }
+    }
+}
+
+struct listsScreen: View {
+    
+    @Query private var myLists: [MyList]
     
     @State private var isPresented: Bool = false
+    @State private var activeSheet: ListSheet? = nil
     
     var body: some View {
+        
         List {
-            Text("My Lists")
-                .font(.largeTitle)
-                .bold()
+            TilesGrid()
+            .listRowInsets(EdgeInsets())
             
-            ForEach(lists, id: \.self) { list in
-                HStack {
-                    Image(systemName: "list.bullet.circle.fill")
-                    
-                    Text(list)
+            Section(header: Text("My lists").font(.headline).fontWeight(.bold)) {
+                ForEach(myLists) { myList in
+                    NavigationLink {
+                        ListDetailScreen(myList: myList)
+                    } label: {
+                        ListRowView(myList: myList)
+                    }
+                    .contextMenu {
+                        Button {
+                            //pin
+                        } label: {
+                            Label("Pin", systemImage: "pin")
+                        }
+                        
+                        Button {
+                            activeSheet = .edit(myList)
+                        } label: {
+                            Label("Info", systemImage: "info.circle")
+                        }
+                        
+                        Button {
+                            //share
+                        } label: {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                        
+                        Button(role: .destructive) {
+                            //Delete
+                        } label: {
+                            Label("Delete list", systemImage: "trash")
+                        }
+                    }
+//                    .swipeActions {
+//                        Button(role: .destructive) {
+//                            deleteReminder(myList)
+//                        } label: {
+//                            Label("Delete", systemImage: "trash")
+//                        }
+//                    }
+                }
+            }
+        }
+        .navigationTitle("My Lists")
+        .sheet(item: $activeSheet) { sheet in
+            NavigationStack {
+                switch sheet {
+                case .new:
+                    AddListScreen()
+                case .edit(let list):
+                    AddListScreen(existingList: list)
+                }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .bottomBar) {
+                Button {
+                    //add reminder view
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Reminder")
+                        .foregroundStyle(.blue)
+                        .fontWeight(.bold)
                 }
             }
             
-            //ten buutton poirtem chyba w toolbar
-            Button {
-                isPresented = true
-            } label: {
-                Text("add list")
-                    .foregroundStyle(.blue)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .listRowSeparator(.hidden)
-        }
-        .listStyle(.plain)
-        .popover(isPresented: $isPresented) {
-            NavigationStack {
-                AddListScreen()
+            ToolbarItem(placement: .bottomBar) {
+                Button {
+                    activeSheet = .new
+                } label: {
+                    Text("add list")
+                        .foregroundStyle(.blue)
+                }
             }
         }
     }
 }
 
-#Preview {
+#Preview { @MainActor in
     NavigationStack {
-        listsView()
+        listsScreen()
     }
+    .modelContainer(mockPreviewConteiner)
 }
+
+
+
+

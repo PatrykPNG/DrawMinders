@@ -12,27 +12,33 @@ import PencilKit
 @Model
 class Reminder {
     var title: String
-    var isCompleted: Bool = false
-    var drawingData: Data? //Data z rysunku
-    var handwrittenText: String?
-    var drawingPreview: Data? //podglad rysunku
-//    var canvasWidth: Double = 300
-    var canvasHeight: Double = 100.0 {
-        didSet {
-            print("Zmiana canvasHeight: \(oldValue) na \(canvasHeight)")
-        }
-    }
+    var isCompleted: Bool
+    var notes: String?
+    var reminderDate: Date?
+    var reminderTime: Date?
+    var isFlagged: Bool
+//    var drawingData: Data? //Data z rysunku
+//    var handwrittenText: String?
+//    var drawingPreview: Data? //podglad rysunku
+//    pamietaj zeby dodac te rzeczy do inita
+
     var list: MyList?
     
-    init(title: String, list: MyList? = nil) {
+    //jak odnowa bede robic init to daj isCompleted: bool = false. Kiedy init zrobi reminder bedzie ustawione na false, gdyz nie jest jeszcze wykonane
+    init(title: String, isCompleted: Bool = false, notes: String? = nil, reminderDate: Date? = nil, reminderTime: Date? = nil, isFlagged: Bool = false, list: MyList? = nil) {
         self.title = title
+        self.isCompleted = isCompleted
+        self.notes = notes
+        self.reminderDate = reminderDate
+        self.reminderTime = reminderTime
+        self.isFlagged = isFlagged
         self.list = list
     }
     
-    static let sampleData = [
-        Reminder(title: "test1"),
-        Reminder(title: "test2"),
-        Reminder(title: "test3"),
-        Reminder(title: "test4"),
-    ]
+//    static let sampleDataReminder = [
+//        Reminder(title: "test1"),
+//        Reminder(title: "test2"),
+//        Reminder(title: "test3"),
+//        Reminder(title: "test4"),
+//    ]
 }

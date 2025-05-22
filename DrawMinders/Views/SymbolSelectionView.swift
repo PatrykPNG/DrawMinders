@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-struct SFSymbolSelection: View {
+struct SymbolSelectionView: View {
     
     @Binding var selectedSymbol: String
     
     let symbols: [String] = ["list.bullet.circle.fill", "tag.circle.fill", "microphone.circle.fill", "sos.circle.fill", "camera.circle.fill", "dog.circle.fill", "envelope.circle.fill", "scissors.circle.fill", "cart.circle.fill", "shoe.circle.fill", "theatermasks.circle.fill", "mappin.circle.fill", "toilet.circle.fill", "tram.circle.fill", "leaf.circle.fill", "shippingbox.circle.fill", "gamecontroller.circle.fill", "gift.circle.fill"]
     
+    //Jak bedziesz chcial ogarnac polozenie ikonek to zajmij sie kolumnami, one powinny wystarczyc, a co do wielkosci jeszcze nwm
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible()),
@@ -51,5 +52,5 @@ struct SFSymbolSelection: View {
 }
 
 #Preview {
-    SFSymbolSelection(selectedSymbol: .constant("tag.circle.fill"))
+    SymbolSelectionView(selectedSymbol: .constant("tag.circle.fill"))
 }

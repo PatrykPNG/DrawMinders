@@ -11,7 +11,10 @@ import SwiftUI
 struct DrawMindersApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                listsScreen()
+            }
+            .modelContainer(for: MyList.self)
         }
     }
 }
