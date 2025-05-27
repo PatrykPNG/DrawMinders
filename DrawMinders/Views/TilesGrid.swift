@@ -11,61 +11,127 @@ import SwiftData
 struct TilesGrid: View {
     @Environment(\.calendar) private var calendar
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.modelContext) private var modelContext
     
-    @Query private var reminders: [Reminder]
+    @Query(filter: #Predicate<MyList> { $0.isPinned }) private var pinnedLists: [MyList]
+    @Query private var allReminders: [Reminder]
+    
+    @Binding var selectedTile: ReminderTileModel?
     
     let columns = [GridItem(.flexible()), GridItem(.flexible())]
     
-    private var remindersForToday: [Reminder] {
-        let today = calendar.startOfDay(for: Date())
-        return reminders.filter {
-            guard let date = $0.reminderDate else { return false }
-            return calendar.isDate(date, inSameDayAs: today) && !$0.isCompleted
+    private var tiles: [ReminderTileModel] {
+        var tiles = [ReminderTileModel]()
+        
+        // trzeba dodac wbudowane filtry
+        let filters: [FilterType] = [.today, .all, .planned, .flagged, .completed]
+        
+        for filter in filters {
+            tiles.append(createTileForFilter(for: filter))
         }
-    }
-
-    private var allReminders: [Reminder] {
-        reminders
-    }
-
-    private var flagedReminders: [Reminder] {
-        reminders.filter { $0.isFlagged && !$0.isCompleted }
+        
+        for list in pinnedLists {
+            tiles.append(createTileForList(for: list))
+        }
+                
+        return tiles
     }
     
-    private var plannedReminders: [Reminder] {
-        reminders.filter { $0.reminderDate != nil && !$0.isCompleted }
-    }
-
-    private var completedReminders: [Reminder] {
-        reminders.filter { !$0.isCompleted }
-    }
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            ReminderTileView(symbol: "calendar.circle.fill", symbolColor: .blue, title: "Today", quantity: remindersForToday.count)
-                .onTapGesture {
-                    print("rem1")
+            ForEach(tiles) { tile in
+                Button {
+                    selectedTile = tile
+                } label: {
+                    ReminderTileView(
+                        symbol: tile.symbol,
+                        symbolColor: tile.symbolColor,
+                        title: tile.title,
+                        quantity: tile.count
+                    )
                 }
-            
-            ReminderTileView(symbol: "tray.circle.fill", symbolColor: colorScheme == .dark ? Color(.systemGray2) : Color.black, title: "All", quantity: allReminders.count)
-                .onTapGesture {
-                    print("tap 2")
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                .contextMenu {
+                    if case .list(let myList) = tile.type {
+                        Button {
+                            myList.isPinned.toggle()
+                        } label: {
+                            Label(myList.isPinned ? "Unpin" : "Pin", systemImage: myList.isPinned ? "pin.slash" : "pin")
+                        }
+                        
+                        Button(role: .destructive) {
+                            modelContext.delete(myList)
+                        } label: {
+                            Label("Delete list", systemImage: "trash")
+                        }
+                    }
                 }
-            
-            ReminderTileView(symbol: "flag.circle.fill", symbolColor: .orange, title: "Flagged", quantity: flagedReminders.count)
-            
-            ReminderTileView(symbol: "calendar.circle.fill", symbolColor: .red, title: "Planned", quantity: plannedReminders.count)
-            
-            ReminderTileView(symbol: "checkmark.circle.fill", symbolColor: .gray, title: "Completed", quantity: completedReminders.count)
-            
+            }
         }
-        .background(colorScheme == .dark ? Color(.black) : Color(.systemGray6))
+        .animation(.snappy(duration: 0.25, extraBounce: 0), value: tiles)
+    }
+    
+    private func createTileForFilter(for filter: FilterType) -> ReminderTileModel {
+            ReminderTileModel(
+                symbol: filter.symbol,
+                symbolColor: filter.symbolColor,
+                title: filter.title,
+                type: .filter(filter),
+                count: countForFilter(filter)
+            )
+        }
+        
+        private func createTileForList(for list: MyList) -> ReminderTileModel {
+            ReminderTileModel(
+                symbol: list.symbol,
+                symbolColor: Color(hex: list.hexColor),
+                title: list.name,
+                type: .list(list),
+                count: list.reminders.count
+            )
+        }
+        
+    private func countForFilter(_ filter: FilterType) -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) else {
+            return 0
+        }
+        
+        switch filter {
+        case .today:
+            return allReminders.filter {
+                guard let date = $0.reminderDate else { return false }
+                return date >= today &&
+                       date < tomorrow &&
+                       !$0.isCompleted
+            }.count
+        case .all:
+            return allReminders.count
+        case .planned:
+            return allReminders.filter {
+                $0.reminderDate != nil &&
+                !$0.isCompleted
+            }.count
+        case .flagged:
+            return allReminders.filter {
+                $0.isFlagged &&
+                !$0.isCompleted
+            }.count
+        case .completed:
+            return allReminders.filter {
+                $0.isCompleted
+            }.count
+        }
     }
 }
 
 #Preview { @MainActor in
     NavigationStack {
-        TilesGrid()
+        TilesGrid(selectedTile: .constant(nil))
     }
     .modelContainer(mockPreviewConteiner)
 }

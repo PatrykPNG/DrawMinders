@@ -75,9 +75,16 @@ struct ReminderEditScreen: View {
                 hasTime = false
             }
         }
-        .onChange(of: hasTime, {
-            hasDate = true
-        })
+        .onChange(of: hasTime) {
+            if hasTime {
+                hasDate = true
+            }
+        }
+        .onChange(of: hasDate) {
+            if !hasDate {
+                hasTime = false
+            }
+        }
     }
     
     private func save() {

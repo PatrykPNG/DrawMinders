@@ -1,5 +1,5 @@
 //
-//  listsView.swift
+//  listsScreen.swift
 //  Reminders_Pencil
 //
 //  Created by Patryk Ostrowski on 18/05/2025.
@@ -23,92 +23,91 @@ enum ListSheet: Identifiable {
 }
 
 struct listsScreen: View {
+    @Environment(\.modelContext) private var modelContext
     
-    @Query private var myLists: [MyList]
+    @Query(filter: #Predicate<MyList> { !$0.isPinned }) private var myLists: [MyList]
     
-    @State private var isPresented: Bool = false
     @State private var activeSheet: ListSheet? = nil
+    @State private var navigationPath = NavigationPath()
+    @State private var selectedTile: ReminderTileModel?
     
     var body: some View {
-        
-        List {
-            TilesGrid()
-            .listRowInsets(EdgeInsets())
-            
-            Section(header: Text("My lists").font(.headline).fontWeight(.bold)) {
-                ForEach(myLists) { myList in
-                    NavigationLink {
-                        ListDetailScreen(myList: myList)
+        NavigationStack(path: $navigationPath) {
+            ScrollView {
+                LazyVStack {
+                    TilesGrid(selectedTile: $selectedTile)
+                        .padding(.horizontal)
+                    
+                    MyListsSectionView(
+                        activeSheet: $activeSheet,
+                        navigationPath: $navigationPath
+                    )
+                        .padding(.horizontal)
+                    
+                }
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationDestination(item: $selectedTile) { tile in
+                switch tile.type {
+                case .list(let list):
+                    ListDetailScreen(myList: list)
+                case .filter(let filterType):
+                    switch filterType {
+                    case .all:
+                        AllRemindersView()
+                    case .completed:
+                        CompletedRemindersView()
+                    case .flagged:
+                        FlaggedRemindersView()
+                    case .planned:
+                        PlannedRemindersView()
+                    case .today:
+                        TodayRemindersView()
+                    }
+                }
+            }
+            .navigationTitle("My Lists")
+            .sheet(item: $activeSheet) { sheet in
+                NavigationStack {
+                    switch sheet {
+                    case .new:
+                        AddListScreen()
+                    case .edit(let list):
+                        AddListScreen(existingList: list)
+                    }
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    Button {
+                        //add reminder view
                     } label: {
-                        ListRowView(myList: myList)
+                        Image(systemName: "plus.circle.fill")
+                        Text("Reminder")
+                            .foregroundStyle(.blue)
+                            .fontWeight(.bold)
                     }
-                    .contextMenu {
-                        Button {
-                            //pin
-                        } label: {
-                            Label("Pin", systemImage: "pin")
-                        }
-                        
-                        Button {
-                            activeSheet = .edit(myList)
-                        } label: {
-                            Label("Info", systemImage: "info.circle")
-                        }
-                        
-                        Button {
-                            //share
-                        } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                        }
-                        
-                        Button(role: .destructive) {
-                            //Delete
-                        } label: {
-                            Label("Delete list", systemImage: "trash")
-                        }
+                }
+                
+                ToolbarItem(placement: .bottomBar) {
+                    Button {
+                        activeSheet = .new
+                    } label: {
+                        Text("add list")
+                            .foregroundStyle(.blue)
                     }
-//                    .swipeActions {
-//                        Button(role: .destructive) {
-//                            deleteReminder(myList)
-//                        } label: {
-//                            Label("Delete", systemImage: "trash")
-//                        }
-//                    }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        
+                    } label: {
+                        Text("Clean DataBase")
+                    }
                 }
             }
         }
-        .navigationTitle("My Lists")
-        .sheet(item: $activeSheet) { sheet in
-            NavigationStack {
-                switch sheet {
-                case .new:
-                    AddListScreen()
-                case .edit(let list):
-                    AddListScreen(existingList: list)
-                }
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .bottomBar) {
-                Button {
-                    //add reminder view
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Reminder")
-                        .foregroundStyle(.blue)
-                        .fontWeight(.bold)
-                }
-            }
-            
-            ToolbarItem(placement: .bottomBar) {
-                Button {
-                    activeSheet = .new
-                } label: {
-                    Text("add list")
-                        .foregroundStyle(.blue)
-                }
-            }
-        }
+        
     }
 }
 

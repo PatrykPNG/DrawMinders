@@ -13,14 +13,16 @@ class MyList {
     var name: String
     var hexColor: String
     var symbol: String
+    var isPinned: Bool
     
     @Relationship(deleteRule: .cascade)
     var reminders: [Reminder] = []
     
-    init(name: String, hexColor: String, symbol: String) {
+    init(name: String, hexColor: String, symbol: String, isPinned: Bool = false) {
         self.name = name
         self.hexColor = hexColor
         self.symbol = symbol
+        self.isPinned = isPinned
     }
 }
 

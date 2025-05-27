@@ -15,7 +15,7 @@ struct ListDetailScreen: View {
 
     @Environment(\.modelContext) private var modelContext
 
-    let myList: MyList
+    @Bindable var myList: MyList
     @State private var reminderTitle: String = ""
     @State private var isReminderAlertPresented: Bool = false
     @State private var selectedReminderId: PersistentIdentifier? = nil
@@ -37,6 +37,9 @@ var body: some View {
                 }
             }
         }
+        .navigationBarTitleDisplayMode(.large)
+        .listStyle(.plain)
+        .listRowSeparator(.hidden)
 
         Spacer()
 
@@ -52,6 +55,7 @@ var body: some View {
         .padding()
         }
         .navigationTitle(myList.name)
+        .navigationBarTitleDisplayMode(.large)
         .alert("New Reminder", isPresented: $isReminderAlertPresented) {
             TextField("reminder title", text: $reminderTitle)
             Button("Cancel", role: .cancel) { }

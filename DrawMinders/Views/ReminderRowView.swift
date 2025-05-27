@@ -63,7 +63,11 @@ struct ReminderRowView: View {
                     }
                     
                     if let date = reminder.reminderDate {
-                        Text(date.formatted())
+                        Text(date.formatted(date: .abbreviated, time: .omitted))
+                    }
+                    
+                    if let time = reminder.reminderTime {
+                        Text((time.formatted(date: .omitted, time: .shortened)))
                     }
                 }
 

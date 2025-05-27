@@ -6,13 +6,35 @@
 //
 
 import SwiftUI
+import SwiftData
 
-struct FlaggedremindersView: View {
+struct FlaggedRemindersView: View {
+    
+    @Query(filter: #Predicate<Reminder> { $0.isFlagged })  private var reminders: [Reminder]
+    
+    @State private var selectedReminderId: PersistentIdentifier? = nil
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        if reminders.isEmpty {
+            Text("0 reminders")
+                .foregroundStyle(.secondary)
+        } else {
+            List(reminders) { reminder in
+                ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+            }
+            
+            .navigationTitle("Flagged")
+            .navigationBarTitleDisplayMode(.large)
+            .listStyle(.plain)
+            .listRowSeparator(.hidden)
+        }
     }
 }
 
-#Preview {
-    FlaggedremindersView()
+#Preview { @MainActor in
+    NavigationStack {
+        FlaggedRemindersView()
+    }
+    .modelContainer(mockPreviewConteiner)
 }
+

@@ -11,9 +11,8 @@ import SwiftUI
 struct DrawMindersApp: App {
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                listsScreen()
-            }
+            listsScreen()
+                .background(Color(.systemGroupedBackground))
             .modelContainer(for: MyList.self)
         }
     }

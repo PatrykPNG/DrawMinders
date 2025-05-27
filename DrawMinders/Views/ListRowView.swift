@@ -9,16 +9,33 @@ import SwiftUI
 import SwiftData
 
 struct ListRowView: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     @Bindable var myList: MyList
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: myList.symbol)
-                .font(.title)
-                .foregroundStyle(Color(hex: myList.hexColor))
+                .font(.largeTitle)
+                .foregroundStyle(.white, Color(hex: myList.hexColor))
+                .frame(width: 24, height: 24)
+
             
             Text(myList.name)
+                .font(.body)
+                .foregroundStyle(.primary)
+            
+            Spacer()
+            
+            Text("\(myList.reminders.count)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+        .contentShape(Rectangle())
+        
     }
 }
 

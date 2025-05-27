@@ -17,26 +17,31 @@ struct ReminderTileView: View {
     let quantity: Int
     
     var body: some View {
-        HStack(alignment: .top) {
-            VStack {
+        VStack() {
+            HStack {
                 Image(systemName: symbol)
                     .font(.title)
                     .foregroundStyle(.white, symbolColor)
                 
                 Spacer()
                 
-                Text(title)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
+                Text("\(quantity)")
+                    .font(.title2.bold())
+                
             }
             
             Spacer()
-            Text("\(quantity)")
-                .font(.title2.bold())
+            HStack {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+            }
         }
-        .padding()
+        .padding(10)
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-        .cornerRadius(16)
+        .cornerRadius(12)
         .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 2)
     }
 }
