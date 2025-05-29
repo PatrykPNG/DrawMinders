@@ -27,7 +27,7 @@ struct ListRowView: View {
             
             Spacer()
             
-            Text("\(myList.reminders.count)")
+            Text("\(totalRemindersCount)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -36,6 +36,10 @@ struct ListRowView: View {
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .contentShape(Rectangle())
         
+    }
+    
+    private var totalRemindersCount: Int {
+        myList.reminders.count + myList.sections.flatMap { $0.reminders }.count
     }
 }
 

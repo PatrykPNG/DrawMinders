@@ -20,7 +20,7 @@ struct FlaggedRemindersView: View {
                 .foregroundStyle(.secondary)
         } else {
             List(reminders) { reminder in
-                ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+//                ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId, onTextChange: { _ in })
             }
             
             .navigationTitle("Flagged")

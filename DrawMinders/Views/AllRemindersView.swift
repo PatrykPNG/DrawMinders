@@ -13,10 +13,12 @@ struct AllRemindersView: View {
     
     @State private var selectedReminderId: PersistentIdentifier? = nil
     
+    
     var body: some View {
         List {
             ForEach(lists) { list in
-                if !list.reminders.isEmpty {
+                let allReminders = list.allReminders
+                if !allReminders.isEmpty {
                     Section(
                         header:
                             Text(list.name)
@@ -25,8 +27,8 @@ struct AllRemindersView: View {
                                 .fontDesign(.rounded)
                                 .foregroundStyle(Color(hex: list.hexColor))
                     ) {
-                        ForEach(list.reminders) { reminder in
-                            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+                        ForEach(allReminders) { reminder in
+//                            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId, onTextChange: { _ in })
                         }
                     }
                 }
@@ -44,4 +46,10 @@ struct AllRemindersView: View {
         AllRemindersView()
     }
     .modelContainer(mockPreviewConteiner)
+}
+
+extension MyList {
+    var allReminders: [Reminder] {
+        sections.flatMap { $0.reminders } + reminders
+    }
 }

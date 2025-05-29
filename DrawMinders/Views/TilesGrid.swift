@@ -89,7 +89,7 @@ struct TilesGrid: View {
                 symbolColor: Color(hex: list.hexColor),
                 title: list.name,
                 type: .list(list),
-                count: list.reminders.count
+                count: list.reminders.count + list.sections.flatMap { $0.reminders }.count
             )
         }
         

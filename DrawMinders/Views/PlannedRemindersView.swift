@@ -16,7 +16,7 @@ struct PlannedRemindersView: View {
     
     var body: some View {
         List(reminders) { reminder in
-            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+//            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId, onTextChange: { _ in })
         }
         .navigationTitle("Planned")
         .navigationBarTitleDisplayMode(.large)

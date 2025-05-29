@@ -10,6 +10,7 @@ import SwiftData
 
 
 struct ReminderRowView: View {
+    @Environment(\.modelContext) private var modelContext
 
     @Bindable var reminder: Reminder
     @Binding var selectedReminderId: PersistentIdentifier?
@@ -18,6 +19,7 @@ struct ReminderRowView: View {
     @State private var completionTimer: Timer?
     @State private var isCompletionInProgress: Bool = false
     @State private var showPopover = false
+    @State private var tempTitle: String = ""
     
     private var isSelected: Bool {
         selectedReminderId == reminder.persistentModelID
@@ -55,11 +57,18 @@ struct ReminderRowView: View {
     
                 // Zawartosc przypomnienia
                 //Tutaj mozna podzialac cos z isCompleted, na przyklad zrobic szary obrazek bardziej
-                VStack {
-                    Text(reminder.title)
+                HStack {
+                    TextField("Reminder title", text: $tempTitle, onCommit: saveTitle)
+                        .onAppear {
+                            tempTitle = reminder.title
+                        }
+                        .onChange(of: tempTitle) {
+                            reminder.title = tempTitle
+                            try? modelContext.save()
+                        }
 
-                    if let notes = reminder.notes {
-                        Text(notes)
+                    if let section = reminder.section {
+                        Text(section.title)
                     }
                     
                     if let date = reminder.reminderDate {
@@ -140,8 +149,9 @@ struct ReminderRowView: View {
         completionProgress = 0
     }
     
-    private func s() {
-        
+    private func saveTitle() {
+        reminder.title = tempTitle
+        try? modelContext.save()
     }
 }
 

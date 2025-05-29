@@ -24,7 +24,7 @@ struct TodayRemindersView: View {
     
     var body: some View {
         List(remindersForToday) { reminder in
-            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+//            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId, onTextChange: { _ in })
         }
         .navigationTitle("Today")
         .navigationBarTitleDisplayMode(.large)
