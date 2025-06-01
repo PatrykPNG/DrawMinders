@@ -16,68 +16,36 @@ struct MyListsSectionView: View {
     @Binding var navigationPath: NavigationPath
     
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("My lists")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .fontDesign(.rounded)
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
-            
-            VStack(spacing: 1) {
+        // przyblizona wartosc wiersza DO POPRAWY
+        let rowHeight: CGFloat = 95
+        let listHeight = CGFloat(myLists.count) * rowHeight
+        
+        List {
+            Section {
                 ForEach(myLists) { myList in
                     NavigationLink {
                         ListDetailScreen(myList: myList)
                     } label: {
-                        ListRowView(myList: myList)
+                        ListRowView(
+                            myList: myList,
+                            onDelete: { modelContext.delete(myList) },
+                            onEdit: { activeSheet = .edit(myList) },
+                            onPinToggle: { myList.isPinned.toggle() }
+                        )
                     }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        Button {
-                            myList.isPinned.toggle()
-                        } label: {
-                            Label(myList.isPinned ? "Unpin" : "Pin", systemImage: myList.isPinned ? "pin.slash" : "pin")
-                        }
-                        
-                        Button {
-                            activeSheet = .edit(myList)
-                        } label: {
-                            Label("Edit list", systemImage: "info.circle")
-                        }
-                        
-                        Button {
-                            //share
-                        } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                        }
-                        
-                        Button(role: .destructive) {
-                            modelContext.delete(myList)
-                        } label: {
-                            Label("Delete list", systemImage: "trash")
-                        }
-                    }
-                    .swipeActions {
-                        Button(role: .destructive) {
-                            modelContext.delete(myList)
-                        } label: {
-                            Label("Delete List", systemImage: "trash")
-                        }
-                        
-                        Button() {
-                            activeSheet = .edit(myList)
-                        } label: {
-                            Label("Edit list", systemImage: "info.circle")
-                        }
-                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
                 }
+            } header: {
+                Text("My lists")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .fontDesign(.rounded)
+                    .foregroundStyle(.primary)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+        //ToDo: Sprawdzic ile wysokosci ma moj row i zmienic w rowHeight
+        .frame(height: listHeight)
+        .scrollDisabled(true)
     }
 }
 
@@ -97,3 +65,5 @@ struct MyListsSectionViewContainer: View {
     }
     .modelContainer(mockPreviewConteiner)
 }
+
+

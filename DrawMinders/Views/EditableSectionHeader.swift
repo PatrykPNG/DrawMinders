@@ -21,6 +21,9 @@ struct EditableSectionHeader: View {
     var body: some View {
         HStack {
             TextField("Nazwa sekcji", text: $tempTitle)
+                .font(.title3)
+                .fontWeight(.bold)
+                .fontDesign(.rounded)
                 .focused($isFocused)
                 .onSubmit {
                     if tempTitle.isEmpty {
@@ -38,13 +41,7 @@ struct EditableSectionHeader: View {
                         isFocused = true
                     }
                 }
-                .onDisappear {
-                    if tempTitle.isEmpty {
-                        onDelete()
-                    } else {
-                        section.isTemporary = false
-                    }
-                }
+                
             
             if !section.isDefault {
                 Button(role: .destructive) {
@@ -54,10 +51,6 @@ struct EditableSectionHeader: View {
                 }
                 .buttonStyle(.plain)
             }
-        }
-        
-        .toolbar {
-            
         }
     }
     

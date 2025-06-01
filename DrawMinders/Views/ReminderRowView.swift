@@ -57,7 +57,7 @@ struct ReminderRowView: View {
     
                 // Zawartosc przypomnienia
                 //Tutaj mozna podzialac cos z isCompleted, na przyklad zrobic szary obrazek bardziej
-                HStack {
+                VStack {
                     TextField("Reminder title", text: $tempTitle, onCommit: saveTitle)
                         .onAppear {
                             tempTitle = reminder.title
@@ -66,10 +66,6 @@ struct ReminderRowView: View {
                             reminder.title = tempTitle
                             try? modelContext.save()
                         }
-
-                    if let section = reminder.section {
-                        Text(section.title)
-                    }
                     
                     if let date = reminder.reminderDate {
                         Text(date.formatted(date: .abbreviated, time: .omitted))

@@ -25,8 +25,6 @@ enum ListSheet: Identifiable {
 struct listsScreen: View {
     @Environment(\.modelContext) private var modelContext
     
-    @Query(filter: #Predicate<MyList> { !$0.isPinned }) private var myLists: [MyList]
-    
     @State private var activeSheet: ListSheet? = nil
     @State private var navigationPath = NavigationPath()
     @State private var selectedTile: ReminderTileModel?
@@ -34,16 +32,13 @@ struct listsScreen: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
-                LazyVStack {
+                VStack {
                     TilesGrid(selectedTile: $selectedTile)
-                        .padding(.horizontal)
-                    
+            
                     MyListsSectionView(
                         activeSheet: $activeSheet,
                         navigationPath: $navigationPath
                     )
-                        .padding(.horizontal)
-                    
                 }
             }
             .background(Color(.systemGroupedBackground))
@@ -66,7 +61,6 @@ struct listsScreen: View {
                     }
                 }
             }
-            .navigationTitle("My Lists")
             .sheet(item: $activeSheet) { sheet in
                 NavigationStack {
                     switch sheet {

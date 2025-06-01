@@ -9,16 +9,19 @@ import SwiftUI
 import SwiftData
 
 struct ListRowView: View {
-    @Environment(\.colorScheme) var colorScheme
     
     @Bindable var myList: MyList
+    
+    var onDelete: (() -> Void)
+    var onEdit: (() -> Void)
+    var onPinToggle: (() -> Void)
     
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: myList.symbol)
                 .font(.largeTitle)
                 .foregroundStyle(.white, Color(hex: myList.hexColor))
-                .frame(width: 24, height: 24)
+                
 
             
             Text(myList.name)
@@ -28,13 +31,50 @@ struct ListRowView: View {
             Spacer()
             
             Text("\(totalRemindersCount)")
-                .font(.caption)
+                .font(.body)
+                .fontWeight(.medium)
+                .fontDesign(.rounded)
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .contentShape(Rectangle())
+        .contextMenu {
+            Button {
+                onPinToggle()
+            } label: {
+                Label(myList.isPinned ? "Unpin" : "Pin", systemImage: myList.isPinned ? "pin.slash" : "pin")
+            }
+
+            Button {
+                onEdit()
+            } label: {
+                Label("Edit list", systemImage: "info.circle")
+            }
+
+            Button {
+                //share
+            } label: {
+                Label("Share", systemImage: "square.and.arrow.up")
+            }
+
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("Delete list", systemImage: "trash")
+            }
+        }
+        .swipeActions {
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("Delete List", systemImage: "trash")
+            }
+
+            Button() {
+                onEdit()
+            } label: {
+                Label("Edit list", systemImage: "info.circle")
+            }
+        }
         
     }
     
@@ -49,7 +89,12 @@ struct ListRowViewContainer: View {
     @Query private var myList: [MyList]
 
     var body: some View {
-        ListRowView(myList: myList[0])
+        ListRowView(
+            myList: myList[0],
+            onDelete: { print("Delete tapped") },
+            onEdit: { print("Edit tapped") },
+            onPinToggle: { print("Pin toggled") }
+        )
     }
 }
 

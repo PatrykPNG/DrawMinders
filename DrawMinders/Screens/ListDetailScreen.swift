@@ -8,29 +8,16 @@
 import SwiftUI
 import SwiftData
 
-//    ReminderRowView(
-//        reminder: reminder,
-//        selectedReminderId: $selectedReminderId
-//    )
-//    .swipeActions {
-//        Button(role: .destructive) {
-//            deleteReminder(reminder)
-//        } label: {
-//            Label("Delete", systemImage: "trash")
-//        }
-//    }
-
-
 struct ListDetailScreen: View {
-
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
 
     @Bindable var myList: MyList
     @State private var reminderTitle: String = ""
     @State private var isReminderAlertPresented: Bool = false
     @State private var selectedReminderId: PersistentIdentifier? = nil
-    
     @State private var newSectionID: UUID?
+    @State private var isInneSectionExpanded: Bool = true
     @FocusState private var focusedSectionID: UUID?
     
 
@@ -38,34 +25,39 @@ struct ListDetailScreen: View {
         List {
             if !myList.reminders.isEmpty {
                 ForEach(myList.reminders) { reminder in
-                    ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+                    ReminderRowView(
+                        reminder: reminder,
+                        selectedReminderId: $selectedReminderId
+                    )
+                    .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
                 }
             }
             
             ForEach(myList.sections.filter { !$0.isDefault }) { section in
-                Section {
-                    ForEach(section.reminders) { reminder in
-                        ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
-                    }
-                } header: {
-                    EditableSectionHeader(
-                        section: section,
-                        onDelete: { deleteSection(section) }
-                    )
-                    .focused($focusedSectionID, equals: section.uuid)
-                }
+                ExpandableSectionView(
+                    section: section,
+                    onDelete: { deleteSection(section) },
+                    selectedReminderId: $selectedReminderId,
+                    focusedSectionID: $focusedSectionID
+                )
+                .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
             }
             
             if let inneSection = myList.sections.first(where: { $0.isDefault }) {
-                Section {
+                Section(isExpanded: $isInneSectionExpanded) {
                     ForEach(inneSection.reminders) { reminder in
                         ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+                            .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
                     }
                 } header: {
                     Text("Inne")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .fontDesign(.rounded)
                 }
             }
         }
+
         .onChange(of: myList.sections) {
             validateInneSection()
         }
@@ -76,7 +68,9 @@ struct ListDetailScreen: View {
         }
         .navigationTitle(myList.name)
         .navigationBarTitleDisplayMode(.large)
-        .listStyle(.plain)
+        .contentMargins(.horizontal, 0)
+        .scrollContentBackground(.hidden)
+        .listStyle(.sidebar)
         
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -85,6 +79,7 @@ struct ListDetailScreen: View {
                 } label: {
                     Text("add section")
                 }
+                .disabled(disableSectionButton())
             }
             
             ToolbarItemGroup(placement: .bottomBar) {
@@ -102,7 +97,7 @@ struct ListDetailScreen: View {
     }
     
     private func deleteReminder(_ reminder: Reminder) {
-        // Przed usunięciem przypomnienia, usuń je z sekcji
+        // Przed usunieciem przypomnienia, usun je z sekcji
         if let section = reminder.section {
             section.reminders.removeAll { $0.id == reminder.id }
         } else {
@@ -184,6 +179,10 @@ struct ListDetailScreen: View {
             try? modelContext.save()
         }
     }
+    
+    private func disableSectionButton() -> Bool {
+        myList.sections.contains { $0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
 }
 
 
@@ -203,5 +202,7 @@ struct MyListDetailScreenContainer: View {
     }
     .modelContainer(mockPreviewConteiner)
 }
+
+
 
 

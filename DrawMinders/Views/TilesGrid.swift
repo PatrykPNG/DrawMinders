@@ -54,6 +54,7 @@ struct TilesGrid: View {
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
                 .contextMenu {
+                    // dodac mozliwosc "ukrycia" wbudowanych kafelkow, zeby potem w edycji listy je przywrocic jak bedziemy chceili
                     if case .list(let myList) = tile.type {
                         Button {
                             myList.isPinned.toggle()
@@ -70,6 +71,7 @@ struct TilesGrid: View {
                 }
             }
         }
+        .padding(.horizontal)
         .animation(.snappy(duration: 0.25, extraBounce: 0), value: tiles)
     }
     
