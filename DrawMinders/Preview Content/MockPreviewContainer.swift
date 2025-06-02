@@ -46,8 +46,8 @@ struct SampleDataLists {
     static var myLists: [MyList] {
         return [
             MyList(name: "Test1", hexColor: "#42c5f5", symbol: "envelope.circle.fill", isPinned: true),
-            MyList(name: "Test2", hexColor: "#4bf542", symbol: "scissors.circle.fill")
-//            MyList(name: "Test3", hexColor: "#daf542", symbol: "cart.circle.fill"),
+            MyList(name: "Test2", hexColor: "#4bf542", symbol: "scissors.circle.fill"),
+            MyList(name: "Test3", hexColor: "#daf542", symbol: "cart.circle.fill")
 //            MyList(name: "Test4", hexColor: "#f56042", symbol: "shoe.circle.fill")
         ]
     }

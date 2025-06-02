@@ -15,6 +15,7 @@ class MyList {
     var hexColor: String
     var symbol: String
     var isPinned: Bool
+    @Attribute var sortOrder: Int
     
     @Relationship(deleteRule: .cascade)
     var reminders: [Reminder] = []
@@ -23,12 +24,13 @@ class MyList {
     var sections: [ReminderSection] = []
     
     
-    init(uuid: UUID = UUID(), name: String, hexColor: String, symbol: String, isPinned: Bool = false) {
+    init(uuid: UUID = UUID(), name: String, hexColor: String, symbol: String, isPinned: Bool = false, sortOrder: Int = 0) {
         self.uuid = uuid
         self.name = name
         self.hexColor = hexColor
         self.symbol = symbol
         self.isPinned = isPinned
+        self.sortOrder = sortOrder
     }
     
     func cleanupEmptySections() {

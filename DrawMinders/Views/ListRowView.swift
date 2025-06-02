@@ -9,9 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct ListRowView: View {
-    
     @Bindable var myList: MyList
-    
     var onDelete: (() -> Void)
     var onEdit: (() -> Void)
     var onPinToggle: (() -> Void)
@@ -37,6 +35,7 @@ struct ListRowView: View {
                 .foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
+        // jesli bedziemy w trybie edycji wylacz contexxtmenu i swipeactions
         .contextMenu {
             Button {
                 onPinToggle()

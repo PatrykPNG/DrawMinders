@@ -11,18 +11,19 @@ import SwiftData
 struct MyListsSectionView: View {
     @Environment(\.modelContext) private var modelContext
     
-    @Query(filter: #Predicate<MyList> { !$0.isPinned }) private var myLists: [MyList]
     @Binding var activeSheet: ListSheet?
     @Binding var navigationPath: NavigationPath
+    
+    let container: ListsContainer
     
     var body: some View {
         // przyblizona wartosc wiersza DO POPRAWY
         let rowHeight: CGFloat = 95
-        let listHeight = CGFloat(myLists.count) * rowHeight
+        let listHeight = CGFloat(container.unpinnedLists.count) * rowHeight
         
         List {
             Section {
-                ForEach(myLists) { myList in
+                ForEach(container.unpinnedLists) { myList in
                     NavigationLink {
                         ListDetailScreen(myList: myList)
                     } label: {
@@ -35,6 +36,10 @@ struct MyListsSectionView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
                 }
+                .onMove { indices, destination in
+                    container.moveUnpinnedLists(from: indices, to: destination)
+                }
+                
             } header: {
                 Text("My lists")
                     .font(.headline)
@@ -46,6 +51,7 @@ struct MyListsSectionView: View {
         //ToDo: Sprawdzic ile wysokosci ma moj row i zmienic w rowHeight
         .frame(height: listHeight)
         .scrollDisabled(true)
+        .environment(\.editMode, .constant(container.isEditing ? .active : .inactive))
     }
 }
 
@@ -53,9 +59,17 @@ struct MyListsSectionViewContainer: View {
 
     @State var activeSheet: ListSheet? = nil
     @State var navigationPath = NavigationPath()
+    let container = ListsContainer()
 
     var body: some View {
-        MyListsSectionView(activeSheet: $activeSheet, navigationPath: $navigationPath)
+        MyListsSectionView(activeSheet: $activeSheet, navigationPath: $navigationPath, container: container)
+            .onAppear {
+                container.refresh(with: SampleDataLists.myLists)
+            }
+            .onChange(of: SampleDataLists.myLists) {
+                container.refresh(with: SampleDataLists.myLists)
+            }
+            .environment(container)
     }
 }
 
@@ -65,5 +79,6 @@ struct MyListsSectionViewContainer: View {
     }
     .modelContainer(mockPreviewConteiner)
 }
+
 
 

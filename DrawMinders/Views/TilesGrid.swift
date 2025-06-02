@@ -13,30 +13,24 @@ struct TilesGrid: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
     
-    @Query(filter: #Predicate<MyList> { $0.isPinned }) private var pinnedLists: [MyList]
     @Query private var allReminders: [Reminder]
     
+    @Binding var activeSheet: ListSheet?
     @Binding var selectedTile: ReminderTileModel?
     
-    let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    let container: ListsContainer
     
     private var tiles: [ReminderTileModel] {
-        var tiles = [ReminderTileModel]()
-        
-        // trzeba dodac wbudowane filtry
         let filters: [FilterType] = [.today, .all, .planned, .flagged, .completed]
         
-        for filter in filters {
-            tiles.append(createTileForFilter(for: filter))
+        return filters.map { filter in
+            TileFactory.createTile(for: filter, reminders: allReminders)
+        } + container.pinnedLists.map { list in
+            TileFactory.createTile(for: list)
         }
-        
-        for list in pinnedLists {
-            tiles.append(createTileForList(for: list))
-        }
-                
-        return tiles
     }
     
+    let columns = [GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
@@ -67,6 +61,12 @@ struct TilesGrid: View {
                         } label: {
                             Label("Delete list", systemImage: "trash")
                         }
+                        
+                        Button {
+                            activeSheet = .edit(myList)
+                        } label: {
+                            Label("Edit list", systemImage: "info.circle")
+                        }
                     }
                 }
             }
@@ -74,66 +74,31 @@ struct TilesGrid: View {
         .padding(.horizontal)
         .animation(.snappy(duration: 0.25, extraBounce: 0), value: tiles)
     }
+}
+
+
+
+
+struct TilesGridContainer: View {
+    @State var activeSheet: ListSheet? = nil
+    @State var selectedTile: ReminderTileModel? = nil
+    let container = ListsContainer()
     
-    private func createTileForFilter(for filter: FilterType) -> ReminderTileModel {
-            ReminderTileModel(
-                symbol: filter.symbol,
-                symbolColor: filter.symbolColor,
-                title: filter.title,
-                type: .filter(filter),
-                count: countForFilter(filter)
-            )
-        }
-        
-        private func createTileForList(for list: MyList) -> ReminderTileModel {
-            ReminderTileModel(
-                symbol: list.symbol,
-                symbolColor: Color(hex: list.hexColor),
-                title: list.name,
-                type: .list(list),
-                count: list.reminders.count + list.sections.flatMap { $0.reminders }.count
-            )
-        }
-        
-    private func countForFilter(_ filter: FilterType) -> Int {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) else {
-            return 0
-        }
-        
-        switch filter {
-        case .today:
-            return allReminders.filter {
-                guard let date = $0.reminderDate else { return false }
-                return date >= today &&
-                       date < tomorrow &&
-                       !$0.isCompleted
-            }.count
-        case .all:
-            return allReminders.count
-        case .planned:
-            return allReminders.filter {
-                $0.reminderDate != nil &&
-                !$0.isCompleted
-            }.count
-        case .flagged:
-            return allReminders.filter {
-                $0.isFlagged &&
-                !$0.isCompleted
-            }.count
-        case .completed:
-            return allReminders.filter {
-                $0.isCompleted
-            }.count
-        }
+    var body: some View {
+        TilesGrid(activeSheet: $activeSheet, selectedTile: $selectedTile, container: container)
+            .onAppear {
+                container.refresh(with: SampleDataLists.myLists)
+            }
+            .onChange(of: SampleDataLists.myLists) {
+                container.refresh(with: SampleDataLists.myLists)
+            }
+            .environment(container)
     }
 }
 
 #Preview { @MainActor in
     NavigationStack {
-        TilesGrid(selectedTile: .constant(nil))
+        TilesGridContainer()
     }
     .modelContainer(mockPreviewConteiner)
 }

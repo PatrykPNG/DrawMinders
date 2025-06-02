@@ -25,21 +25,44 @@ enum ListSheet: Identifiable {
 struct listsScreen: View {
     @Environment(\.modelContext) private var modelContext
     
+    @Query private var allLists: [MyList]
+    
     @State private var activeSheet: ListSheet? = nil
     @State private var navigationPath = NavigationPath()
     @State private var selectedTile: ReminderTileModel?
+    @State private var container = ListsContainer()
+    
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack {
-                    TilesGrid(selectedTile: $selectedTile)
-            
-                    MyListsSectionView(
-                        activeSheet: $activeSheet,
-                        navigationPath: $navigationPath
-                    )
+                    if container.isEditing {
+                        EditListView(
+                            activeSheet: $activeSheet,
+                            selectedTile: $selectedTile,
+                            container: container
+                        )
+                    } else {
+                        TilesGrid(
+                            activeSheet: $activeSheet,
+                            selectedTile: $selectedTile,
+                            container: container
+                        )
+                        
+                        MyListsSectionView(
+                            activeSheet: $activeSheet,
+                            navigationPath: $navigationPath,
+                            container: container
+                        )
+                    }
                 }
+            }
+            .onAppear {
+                container.refresh(with: allLists)
+            }
+            .onChange(of: allLists) {
+                container.refresh(with: allLists)
             }
             .background(Color(.systemGroupedBackground))
             .navigationDestination(item: $selectedTile) { tile in
@@ -61,6 +84,7 @@ struct listsScreen: View {
                     }
                 }
             }
+            .navigationTitle("My Lists")
             .sheet(item: $activeSheet) { sheet in
                 NavigationStack {
                     switch sheet {
@@ -94,9 +118,9 @@ struct listsScreen: View {
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        
+                        container.toggleEditing()
                     } label: {
-                        Text("Clean DataBase")
+                        Text(container.isEditing ? "Done" : "Edit")
                     }
                 }
             }
