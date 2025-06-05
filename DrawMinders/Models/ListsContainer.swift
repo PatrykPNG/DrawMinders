@@ -11,9 +11,19 @@ import SwiftData
 @Observable
 class ListsContainer {
     private var allLists: [MyList] = []
-    var filterOrder: [FilterType] = [.today, .all, .planned, .flagged, .completed]
-    
     var isEditing = false
+    
+    var pinnedFilters: [PinnedFilter] {
+        _pinnedFilters.sorted { $0.sortOrder < $1.sortOrder }
+    }
+    
+    private var _pinnedFilters = [
+        PinnedFilter(type: .today, sortOrder: 0, isVisible: true),
+        PinnedFilter(type: .all, sortOrder: 1, isVisible: true),
+        PinnedFilter(type: .planned, sortOrder: 2, isVisible: true),
+        PinnedFilter(type: .flagged, sortOrder: 3, isVisible: true),
+        PinnedFilter(type: .completed, sortOrder: 4, isVisible: true)
+    ]
     
     var pinnedLists: [MyList] {
         allLists
@@ -29,32 +39,57 @@ class ListsContainer {
     
     func refresh(with lists: [MyList]) {
         allLists = lists
+        
+        updateSortOrder(for: pinnedLists)
+        updateSortOrder(for: unpinnedLists)
     }
     
     func togglePin(for list: MyList) {
         list.isPinned.toggle()
-        list.sortOrder = Int(Date().timeIntervalSince1970)
+        list.sortOrder = list.isPinned ? pinnedLists.count : unpinnedLists.count
+        refresh(with: allLists)
     }
     
     func toggleEditing() {
         isEditing.toggle()
     }
     
-    func movePinnedLists(from source: IndexSet, to destination: Int) {
-        var pinned = pinnedLists
-        pinned.move(fromOffsets: source, toOffset: destination)
-        updateSortOrders(for: pinned)
-    }
-    
-    func moveUnpinnedLists(from source: IndexSet, to destination: Int) {
-        var unpinned = unpinnedLists
-        unpinned.move(fromOffsets: source, toOffset: destination)
-        updateSortOrders(for: unpinned)
-    }
-    
-    func updateSortOrders(for lists: [MyList]) {
+    func updateSortOrder(for lists: [MyList]) {
         for (index, list) in lists.enumerated() {
             list.sortOrder = index
         }
+    }
+    
+    private func updateFilterSortOrder() {
+        for (index, filter) in _pinnedFilters.enumerated() {
+            filter.sortOrder = index
+        }
+    }
+    
+    func moveFilters(from source: IndexSet, to destination: Int) {
+        _pinnedFilters.move(fromOffsets: source, toOffset: destination)
+        updateFilterSortOrder()
+    }
+    
+    func movePinnedLists(from source: IndexSet, to destination: Int) {
+        var currentPinned = pinnedLists
+        currentPinned.move(fromOffsets: source, toOffset: destination)
+        updateSortOrder(for: currentPinned)
+    }
+    
+    func moveUnpinnedLists(from source: IndexSet, to destination: Int) {
+        var currentUnpinned = unpinnedLists
+        currentUnpinned.move(fromOffsets: source, toOffset: destination)
+        updateSortOrder(for: currentUnpinned)
+    }
+    
+    func moveInSection(from source: IndexSet, to destination: Int) {
+        var current = unpinnedLists
+        current.move(fromOffsets: source, toOffset: destination)
+        updateSortOrder(for: current)
+    }
+    
+    func deleteList(_ list: MyList) {
+        allLists.removeAll { $0.id == list.id }
     }
 }

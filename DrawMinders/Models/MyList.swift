@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+//Pozmieniac relacje zeby usuwalo sie tak jak nalezy
 
 @Model
 class MyList {
@@ -17,10 +18,10 @@ class MyList {
     var isPinned: Bool
     @Attribute var sortOrder: Int
     
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \Reminder.list)
     var reminders: [Reminder] = []
     
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \ReminderSection.list)
     var sections: [ReminderSection] = []
     
     

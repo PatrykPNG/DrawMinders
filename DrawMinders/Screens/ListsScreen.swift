@@ -29,7 +29,7 @@ struct listsScreen: View {
     
     @State private var activeSheet: ListSheet? = nil
     @State private var navigationPath = NavigationPath()
-    @State private var selectedTile: ReminderTileModel?
+    @State private var selectedTile: ListTileModel?
     @State private var container = ListsContainer()
     
     
@@ -40,21 +40,23 @@ struct listsScreen: View {
                     if container.isEditing {
                         EditListView(
                             activeSheet: $activeSheet,
-                            selectedTile: $selectedTile,
                             container: container
                         )
+                        .transition(.opacity)
                     } else {
                         TilesGrid(
                             activeSheet: $activeSheet,
                             selectedTile: $selectedTile,
                             container: container
                         )
+                        .transition(.scale)
                         
                         MyListsSectionView(
                             activeSheet: $activeSheet,
                             navigationPath: $navigationPath,
                             container: container
                         )
+                        .transition(.scale)
                     }
                 }
             }
@@ -92,6 +94,10 @@ struct listsScreen: View {
                         AddListScreen()
                     case .edit(let list):
                         AddListScreen(existingList: list)
+                            .onDisappear {
+                                container.refresh(with: allLists)
+                                
+                            }
                     }
                 }
             }
@@ -118,9 +124,12 @@ struct listsScreen: View {
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        container.toggleEditing()
+                        withAnimation {
+                            container.toggleEditing()
+                        }
                     } label: {
                         Text(container.isEditing ? "Done" : "Edit")
+                            .fontWeight(.medium)
                     }
                 }
             }

@@ -15,7 +15,7 @@ class ReminderSection {
     var isTemporary: Bool = false // czy to sekcja "Inne"
     var isDefault: Bool = false
     
-    @Relationship(deleteRule: .nullify)
+    @Relationship(deleteRule: .nullify, inverse: \Reminder.section)
     var reminders: [Reminder] = []
     
     var list: MyList?

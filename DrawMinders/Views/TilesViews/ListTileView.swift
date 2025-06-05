@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ReminderTileView: View {
+struct ListTileView: View {
     
     @Environment(\.colorScheme) var colorScheme
     
@@ -47,5 +47,5 @@ struct ReminderTileView: View {
 }
 
 #Preview {
-    ReminderTileView(symbol: "calendar.circle.fill", symbolColor: Color(.red), title: "Today", quantity: 5)
+    ListTileView(symbol: "calendar.circle.fill", symbolColor: Color(.red), title: "Today", quantity: 5)
 }

@@ -20,6 +20,7 @@ struct ListDetailScreen: View {
     @State private var isInneSectionExpanded: Bool = true
     @FocusState private var focusedSectionID: UUID?
     
+    
 
     var body: some View {
         List {

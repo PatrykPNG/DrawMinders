@@ -19,8 +19,6 @@ struct ListRowView: View {
             Image(systemName: myList.symbol)
                 .font(.largeTitle)
                 .foregroundStyle(.white, Color(hex: myList.hexColor))
-                
-
             
             Text(myList.name)
                 .font(.body)
@@ -35,7 +33,6 @@ struct ListRowView: View {
                 .foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
-        // jesli bedziemy w trybie edycji wylacz contexxtmenu i swipeactions
         .contextMenu {
             Button {
                 onPinToggle()

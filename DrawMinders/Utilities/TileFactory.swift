@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct TileFactory {
-    static func createTile(for filter: FilterType, reminders: [Reminder]) -> ReminderTileModel {
-        ReminderTileModel(
+    static func createTile(for filter: FilterType, reminders: [Reminder]) -> ListTileModel {
+        ListTileModel(
+            id: filter.title,
             symbol: filter.symbol,
             symbolColor: filter.symbolColor,
             title: filter.title,
@@ -18,8 +19,9 @@ struct TileFactory {
         )
     }
     
-    static func createTile(for list: MyList) -> ReminderTileModel {
-        ReminderTileModel(
+    static func createTile(for list: MyList) -> ListTileModel {
+        ListTileModel(
+            id: list.uuid.uuidString,
             symbol: list.symbol,
             symbolColor: Color(hex: list.hexColor),
             title: list.name,

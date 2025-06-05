@@ -13,7 +13,7 @@ struct DrawMindersApp: App {
         WindowGroup {
             listsScreen()
                 .background(Color(.systemGroupedBackground))
-            .modelContainer(for: MyList.self)
+                .modelContainer(for: [MyList.self, Reminder.self, ReminderSection.self])
         }
     }
 }

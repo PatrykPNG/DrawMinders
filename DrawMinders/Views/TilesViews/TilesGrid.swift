@@ -16,15 +16,17 @@ struct TilesGrid: View {
     @Query private var allReminders: [Reminder]
     
     @Binding var activeSheet: ListSheet?
-    @Binding var selectedTile: ReminderTileModel?
+    @Binding var selectedTile: ListTileModel?
     
     let container: ListsContainer
     
-    private var tiles: [ReminderTileModel] {
-        let filters: [FilterType] = [.today, .all, .planned, .flagged, .completed]
-        
-        return filters.map { filter in
-            TileFactory.createTile(for: filter, reminders: allReminders)
+    //kolejnosc tiles w tym widoku
+    private var tiles: [ListTileModel] {        
+        return container.pinnedFilters
+            .filter { $0.isVisible }
+            .sorted(by: { $0.sortOrder < $1.sortOrder })
+            .map { filter in
+                TileFactory.createTile(for: filter.type, reminders: allReminders)
         } + container.pinnedLists.map { list in
             TileFactory.createTile(for: list)
         }
@@ -38,7 +40,7 @@ struct TilesGrid: View {
                 Button {
                     selectedTile = tile
                 } label: {
-                    ReminderTileView(
+                    ListTileView(
                         symbol: tile.symbol,
                         symbolColor: tile.symbolColor,
                         title: tile.title,
@@ -57,7 +59,7 @@ struct TilesGrid: View {
                         }
                         
                         Button(role: .destructive) {
-                            modelContext.delete(myList)
+                            deleteList(myList)
                         } label: {
                             Label("Delete list", systemImage: "trash")
                         }
@@ -67,12 +69,29 @@ struct TilesGrid: View {
                         } label: {
                             Label("Edit list", systemImage: "info.circle")
                         }
+                    } else if case .filter(let filterType) = tile.type {
+                        if let pinnedFilter = container.pinnedFilters.first(where: { $0.type == filterType }) {
+                            Button {
+                                pinnedFilter.isVisible.toggle()
+                            } label: {
+                                Label(
+                                    pinnedFilter.isVisible ? "Hide" : "Show",
+                                    systemImage: pinnedFilter.isVisible ? "eye.slash" : "eye"
+                                )
+                            }
+                        }
                     }
                 }
+                .transition(.identity)
             }
         }
         .padding(.horizontal)
         .animation(.snappy(duration: 0.25, extraBounce: 0), value: tiles)
+    }
+    
+    private func deleteList(_ list: MyList) {
+        container.deleteList(list)
+        modelContext.delete(list)
     }
 }
 
@@ -81,7 +100,7 @@ struct TilesGrid: View {
 
 struct TilesGridContainer: View {
     @State var activeSheet: ListSheet? = nil
-    @State var selectedTile: ReminderTileModel? = nil
+    @State var selectedTile: ListTileModel? = nil
     let container = ListsContainer()
     
     var body: some View {

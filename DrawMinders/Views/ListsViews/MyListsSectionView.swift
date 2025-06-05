@@ -29,15 +29,16 @@ struct MyListsSectionView: View {
                     } label: {
                         ListRowView(
                             myList: myList,
-                            onDelete: { modelContext.delete(myList) },
+                            onDelete: { deleteList(myList) },
                             onEdit: { activeSheet = .edit(myList) },
                             onPinToggle: { myList.isPinned.toggle() }
                         )
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
                 }
-                .onMove { indices, destination in
-                    container.moveUnpinnedLists(from: indices, to: destination)
+                // Przy nowej wersji ios Moze przestac dzialac
+                .onMove { source, destination in
+                    container.moveInSection(from: source, to: destination)
                 }
                 
             } header: {
@@ -51,7 +52,11 @@ struct MyListsSectionView: View {
         //ToDo: Sprawdzic ile wysokosci ma moj row i zmienic w rowHeight
         .frame(height: listHeight)
         .scrollDisabled(true)
-        .environment(\.editMode, .constant(container.isEditing ? .active : .inactive))
+    }
+    
+    private func deleteList(_ list: MyList) {
+        container.deleteList(list)
+        modelContext.delete(list)
     }
 }
 

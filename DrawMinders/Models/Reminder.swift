@@ -21,6 +21,7 @@ class Reminder {
     var isEmpty: Bool = false
     var list: MyList?
     var section: ReminderSection? //jezeli nil , to przypomnienie jest bez sekcji
+    
 //    var drawingData: Data? //Data z rysunku
 //    var handwrittenText: String?
 //    var drawingPreview: Data? //podglad rysunku

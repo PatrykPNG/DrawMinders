@@ -20,10 +20,12 @@ struct AddListScreen: View {
     
     init(existingList: MyList? = nil) {
         self.existingList = existingList
+        let defaultSymbol = "list.bullet.circle.fill"
+        let defaultColor = "#007AFF"
         
-        _selectedSymbol = State(initialValue: existingList? .symbol ?? "list.bullet.circle.fill")
-        _selectedColor = State(initialValue: Color(hex: existingList?.hexColor ?? "#007AFF"))
-        _listName = State(initialValue: existingList? .name ?? "")
+        _selectedSymbol = State(initialValue: existingList?.symbol ?? defaultSymbol)
+        _selectedColor = State(initialValue: Color(hex: existingList?.hexColor ?? defaultColor))
+        _listName = State(initialValue: existingList?.name ?? "")
     }
     
     var body: some View {
@@ -80,7 +82,7 @@ struct AddListScreen: View {
             )
             modelContext.insert(newList)
         }
-        
+
         try? modelContext.save()
         dismiss()
     }

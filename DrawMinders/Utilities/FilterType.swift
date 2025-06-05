@@ -1,29 +1,11 @@
 //
-//  ReminderTileModel.swift
+//  FilterType.swift
 //  DrawMinders
 //
-//  Created by Patryk Ostrowski on 24/05/2025.
+//  Created by Patryk Ostrowski on 03/06/2025.
 //
 
-import Foundation
 import SwiftUI
-
-enum TileType {
-    case filter(FilterType)
-    case list(MyList)
-}
-
-struct ReminderTileModel: Identifiable, Hashable {
-    let id = UUID()
-    let symbol: String
-    let symbolColor: Color
-    let title: String
-    let type: TileType
-    let count: Int
-    
-    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
-}
 
 enum FilterType {
     case today
