@@ -25,6 +25,8 @@ struct ReminderRowView: View {
         selectedReminderId == reminder.persistentModelID
     }
     
+    //wprowadz zeby info button byl widzony wtedy co jestesmy w trakcie pisania/ rysowania
+    
     var body: some View {
             HStack {
                 // Is Completed przycisk
@@ -101,10 +103,16 @@ struct ReminderRowView: View {
                     }
                 }
             }
+            .draggable(reminder)
             .contentShape(Rectangle())
             .onTapGesture {
                 selectedReminderId = reminder.persistentModelID
             }
+//            .swipeActions {
+//                Button("Test") {
+//                    
+//                }
+//            }
         }
         
     private func handleCirclePress() {

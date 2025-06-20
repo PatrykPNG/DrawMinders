@@ -27,7 +27,7 @@ var mockPreviewConteiner: ModelContainer = {
         // Przykład listy z sekcjami
         if myList.name == "Test2" {
             let section1 = ReminderSection(title: "Section1", list: myList)
-            let section2 = ReminderSection(title: "Section2", isTemporary: true, list: myList)
+            let section2 = ReminderSection(title: "Section2", list: myList)
             
             section1.reminders.append(Reminder(title: "Reminder1S", section: section1))
             section2.reminders.append(Reminder(title: "Reminder2S", section: section2))
@@ -61,6 +61,36 @@ struct SampleDataLists {
     }
 }
 
+
+extension SampleDataLists {
+    static var previewList: MyList {
+        let list = MyList(
+            name: "Preview List",
+            hexColor: "#FFA500",
+            symbol: "list.bullet.circle.fill",
+            isPinned: true
+        )
+        // Sekcja 1
+        let section1 = ReminderSection(title: "Work", sortOrder: 0, list: list)
+        section1.reminders = [
+            Reminder(title: "Prepare presentation"),
+            Reminder(title: "Call client", isCompleted: true)
+        ]
+        // Sekcja 2
+        let section2 = ReminderSection(title: "Personal", sortOrder: 1, list: list)
+        section2.reminders = [
+            Reminder(title: "Buy groceries"),
+            Reminder(title: "Book hotel")
+        ]
+        // Przypomnienia bez sekcji
+        list.reminders.append(contentsOf: [
+            Reminder(title: "Call mom"),
+            Reminder(title: "Renew subscription")
+        ])
+        list.sections = [section1, section2]
+        return list
+    }
+}
 
 
 //static let sampleDataList = [

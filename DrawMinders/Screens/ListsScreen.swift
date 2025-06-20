@@ -22,7 +22,7 @@ enum ListSheet: Identifiable {
     }
 }
 
-struct listsScreen: View {
+struct ListsScreen: View {
     @Environment(\.modelContext) private var modelContext
     
     @Query private var allLists: [MyList]
@@ -140,7 +140,7 @@ struct listsScreen: View {
 
 #Preview { @MainActor in
     NavigationStack {
-        listsScreen()
+        ListsScreen()
     }
     .modelContainer(mockPreviewConteiner)
 }

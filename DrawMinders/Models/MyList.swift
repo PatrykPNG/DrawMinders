@@ -11,18 +11,18 @@ import SwiftData
 
 @Model
 class MyList {
-    var uuid: UUID
+    @Attribute(.unique) var uuid: UUID
     var name: String
     var hexColor: String
     var symbol: String
     var isPinned: Bool
     @Attribute var sortOrder: Int
     
-    @Relationship(deleteRule: .cascade, inverse: \Reminder.list)
+    @Relationship(deleteRule: .cascade)
     var reminders: [Reminder] = []
     
-    @Relationship(deleteRule: .cascade, inverse: \ReminderSection.list)
-    var sections: [ReminderSection] = []
+    @Relationship(deleteRule: .cascade)
+    var sections: [ReminderSection] = [] 
     
     
     init(uuid: UUID = UUID(), name: String, hexColor: String, symbol: String, isPinned: Bool = false, sortOrder: Int = 0) {
@@ -32,16 +32,6 @@ class MyList {
         self.symbol = symbol
         self.isPinned = isPinned
         self.sortOrder = sortOrder
-    }
-    
-    func cleanupEmptySections() {
-        let sectionsToRemove = sections.filter { section in
-            !section.isDefault &&
-            section.reminders.isEmpty &&
-            (section.title.isEmpty || section.isTemporary)
-        }
-        
-        sections.removeAll { sectionsToRemove.contains($0) }
     }
 }
 

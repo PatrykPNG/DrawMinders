@@ -11,7 +11,7 @@ import SwiftUI
 struct DrawMindersApp: App {
     var body: some Scene {
         WindowGroup {
-            listsScreen()
+            ListsScreen()
                 .background(Color(.systemGroupedBackground))
                 .modelContainer(for: [MyList.self, Reminder.self, ReminderSection.self])
         }

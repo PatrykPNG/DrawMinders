@@ -30,6 +30,8 @@ struct ReminderEditScreen: View {
                 TextField("Notes", text: $editNotes)
             }
             
+            Text(reminder.section?.title ?? "nie ma")
+            
             Section {
                 Toggle("Date", isOn: $hasDate)
                 if hasDate {

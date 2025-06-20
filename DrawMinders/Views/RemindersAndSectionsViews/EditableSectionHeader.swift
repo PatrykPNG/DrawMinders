@@ -10,54 +10,56 @@ import SwiftData
 
 struct EditableSectionHeader: View {
     @Environment(\.modelContext) private var modelContext
-    
     @Bindable var section: ReminderSection
     var onDelete: () -> Void
     
     @FocusState private var isFocused: Bool
-    
-    @State private var tempTitle: String = ""
+    @State private var editedTitle: String = ""
+    @State private var originalTitle: String = ""
     
     var body: some View {
         HStack {
-            TextField("Nazwa sekcji", text: $tempTitle)
+            TextField("Nazwa sekcji", text: $editedTitle)
                 .font(.title3)
                 .fontWeight(.bold)
                 .fontDesign(.rounded)
+                .multilineTextAlignment(.leading)
                 .focused($isFocused)
-                .onSubmit {
-                    if tempTitle.isEmpty {
-                        onDelete()
-                    } else {
-                        section.isTemporary = false
-                    }
-                }
-                .onChange(of: tempTitle) {
-                    section.title = tempTitle
-                }
+                .onSubmit(validateTitle)
                 .onAppear {
-                    tempTitle = section.title
-                    if section.isTemporary {
-                        isFocused = true
+                    editedTitle = section.title
+                    originalTitle = section.title
+                }
+                .onChange(of: isFocused) { _, newValue in
+                    if !newValue {
+                        validateTitle()
                     }
                 }
-                
-            
-            if !section.isDefault {
-                Button(role: .destructive) {
-                    onDelete()
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.plain)
+        }
+        .padding(.vertical)
+        .contentShape(Rectangle())
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("Delete", systemImage: "trash")
             }
+        }
+    }
+    
+    private func validateTitle() {
+        let trimmed = editedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            editedTitle = originalTitle
+        } else if trimmed != section.title {
+            section.title = trimmed
         }
     }
     
 }
 
 #Preview { @MainActor in
-    let section = ReminderSection(title: "Testowa sekcja", isTemporary: false)
+    let section = ReminderSection(title: "Testowa sekcja")
     return EditableSectionHeader(
         section: section,
         onDelete: {}

@@ -10,21 +10,21 @@ import SwiftData
 
 @Model
 class ReminderSection {
-    var uuid: UUID
+    @Attribute(.unique) var uuid: UUID
     var title: String
-    var isTemporary: Bool = false // czy to sekcja "Inne"
-    var isDefault: Bool = false
+    var sortOrder: Int
     
-    @Relationship(deleteRule: .nullify, inverse: \Reminder.section)
     var reminders: [Reminder] = []
     
+    @Relationship
     var list: MyList?
     
-    init(uuid: UUID = UUID(), title: String, isTemporary: Bool = false, isDefault: Bool = false, list: MyList? = nil) {
+    init(uuid: UUID = UUID(), title: String, sortOrder: Int = 0, list: MyList? = nil) {
         self.uuid = uuid
         self.title = title
-        self.isTemporary = isTemporary
-        self.isDefault = isDefault
+        self.sortOrder = sortOrder
         self.list = list
     }
+
 }
+

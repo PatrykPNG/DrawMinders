@@ -11,198 +11,232 @@ import SwiftData
 struct ListDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
+    @Query private var allReminders: [Reminder]
 
     @Bindable var myList: MyList
-    @State private var reminderTitle: String = ""
     @State private var isReminderAlertPresented: Bool = false
     @State private var selectedReminderId: PersistentIdentifier? = nil
-    @State private var newSectionID: UUID?
-    @State private var isInneSectionExpanded: Bool = true
-    @FocusState private var focusedSectionID: UUID?
+    @State private var tempSection: TempSection? = nil
+    @State private var isEditingTempSection = false
     
-    
+    @State private var othersSectionName: String = ""
+
+    private var remindersWithoutSection: [Reminder] {
+        allReminders.filter { $0.section == nil && $0.list?.id == myList.id }
+    }
 
     var body: some View {
-        List {
-            if !myList.reminders.isEmpty {
-                ForEach(myList.reminders) { reminder in
-                    ReminderRowView(
-                        reminder: reminder,
-                        selectedReminderId: $selectedReminderId
+  
+        
+        ScrollView {
+            LazyVStack {
+                // Tutaj tymczasowa sekcja
+                if let tempSection = tempSection {
+                    Divider()
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(UIColor.separator))
+
+                    TempSectionRow(
+                        section: tempSection,
+                        onCommit: confirmTempSection,
+                        onCancel: cancelTempSection
                     )
                     .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
                 }
-            }
-            
-            ForEach(myList.sections.filter { !$0.isDefault }) { section in
-                ExpandableSectionView(
-                    section: section,
-                    onDelete: { deleteSection(section) },
-                    selectedReminderId: $selectedReminderId,
-                    focusedSectionID: $focusedSectionID
-                )
-                .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
-            }
-            
-            if let inneSection = myList.sections.first(where: { $0.isDefault }) {
-                Section(isExpanded: $isInneSectionExpanded) {
-                    ForEach(inneSection.reminders) { reminder in
-                        ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
-                            .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
+                
+                // Przypadki gdy nie ma sekcji
+                if myList.sections.isEmpty {
+                    remindersWithoutSectionBlock
+                }
+                // Przypadki gdy są sekcje
+                else {
+                    sectionsBlock
+                    
+                    // Dodatkowe przypomnienia bez sekcji (gdy istnieją)
+                    if !remindersWithoutSection.isEmpty {
+                        OthersSection(
+                            reminders: remindersWithoutSection,
+                            onDelete: deleteAllRemindersWithoutSection,
+                            selectedReminderId: $selectedReminderId,
+                            sectionName: $othersSectionName,
+                            onCreate: createSectionFromOthers
+                        )
                     }
-                } header: {
-                    Text("Inne")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .fontDesign(.rounded)
                 }
             }
         }
-
-        .onChange(of: myList.sections) {
-            validateInneSection()
-        }
-        .onChange(of: newSectionID) {
-            if let id = newSectionID {
-                focusedSectionID = id
-            }
-        }
+        .edgesIgnoringSafeArea(.horizontal)
         .navigationTitle(myList.name)
         .navigationBarTitleDisplayMode(.large)
         .contentMargins(.horizontal, 0)
         .scrollContentBackground(.hidden)
-        .listStyle(.sidebar)
-        
+//        .listStyle(.sidebar)
+        .onDisappear {
+            autoSaveTempSection()
+            autoSaveOthersSection()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background {
+                autoSaveTempSection()
+                autoSaveOthersSection()
+            }
+        }
         .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Add section") {
                     addSection()
-                } label: {
-                    Text("add section")
                 }
-                .disabled(disableSectionButton())
+                .disabled(tempSection != nil)
             }
             
-            ToolbarItemGroup(placement: .bottomBar) {
-                Button {
-                    addReminder()
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Reminder")
-                        .fontWeight(.bold)
-                        .fontDesign(.rounded)
-                }
-                Spacer()
+            ToolbarItem(placement: .bottomBar) {
+                    Button(action: addReminder) {
+                        Image(systemName: "plus.circle.fill")
+                    }
             }
         }
     }
     
-    private func deleteReminder(_ reminder: Reminder) {
-        // Przed usunieciem przypomnienia, usun je z sekcji
-        if let section = reminder.section {
-            section.reminders.removeAll { $0.id == reminder.id }
-        } else {
-            myList.reminders.removeAll { $0.id == reminder.id }
+    private var remindersWithoutSectionBlock: some View {
+        ForEach(remindersWithoutSection) { reminder in
+            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+            Divider()
+                .frame(height: 1)
+                .frame(maxWidth: .infinity)
+                .background(Color(UIColor.separator))
+                .padding(.leading, 30)
         }
-        
-        modelContext.delete(reminder)
-        try? modelContext.save()
+        .padding(.leading)
+        .padding(.top)
+        .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
     }
     
-    private func addReminder() {
-        let newReminder = Reminder(title: "Nowe przypomnienie")
-        
-        // Logika przypisywania
-        if let inne = myList.sections.first(where: { $0.isDefault }) {
-            inne.reminders.append(newReminder)
-            newReminder.section = inne
-        } else {
-            myList.reminders.append(newReminder)
+    private var sectionsBlock: some View {
+        ForEach(myList.sections.sorted(by: { $0.sortOrder < $1.sortOrder })) { section in
+            ExpandableSectionView(
+                section: section,
+                onDelete: { deleteSection(section) },
+                selectedReminderId: $selectedReminderId
+            )
+            Divider()
+                .frame(height: 2)
+                .frame(maxWidth: .infinity)
+                .background(Color(UIColor.separator))
         }
-        
-        modelContext.insert(newReminder)
-        try? modelContext.save()
     }
     
     private func addSection() {
-        let newSection = ReminderSection(title: "", isTemporary: true)
-        newSectionID = newSection.uuid
-        myList.sections.insert(newSection, at: 0)
-        
-        // Utwórz "Inne" jeśli nie istnieje
-        if myList.sections.first(where: { $0.isDefault }) == nil {
-            let defaultSection = ReminderSection(title: "Inne", isDefault: true)
-            myList.sections.append(defaultSection)
-        }
-        
-        // Przenieś istniejące przypomnienia do "Inne"
-        moveOrphansToInne()
+        tempSection = TempSection()
+        isEditingTempSection = true
+    }
+    
+    private func addReminder() {
+        let reminder = Reminder( list: myList)
+        myList.reminders.append(reminder)
     }
     
     private func deleteSection(_ section: ReminderSection) {
-        guard !section.isDefault else { return }
-        
-        // Przenieś przypomnienia do "Inne"
-        if let inne = myList.sections.first(where: { $0.isDefault }) {
-            inne.reminders.append(contentsOf: section.reminders)
-            section.reminders.forEach { $0.section = inne }
-        }
-        
-        modelContext.delete(section)
         myList.sections.removeAll { $0.id == section.id }
-        validateInneSection()
-        try? modelContext.save() // natychmiastowo aktualizacja
     }
     
-    private func moveOrphansToInne() {
-        guard let inne = myList.sections.first(where: { $0.isDefault }) else { return }
-        
-        // Przenieś tylko przypomnienia bez sekcji
-        let orphans = myList.reminders.filter { $0.section == nil }
-        inne.reminders.append(contentsOf: orphans)
-        myList.reminders.removeAll { orphans.contains($0) }
-    }
-    
-    private func validateInneSection() {
-        guard let inne = myList.sections.first(where: { $0.isDefault }) else { return }
-        
-        // Sprawdź czy są jakiekolwiek NIEDOMYŚLNE sekcje
-        let hasUserSections = myList.sections.contains { !$0.isDefault }
-        
-        if !hasUserSections {
-            // Przenieś przypomnienia z powrotem do głównej listy
-            myList.reminders.append(contentsOf: inne.reminders)
-            inne.reminders.forEach { $0.section = nil }
-            
-            // Usuń "Inne"
-            modelContext.delete(inne)
-            myList.sections.removeAll { $0.isDefault }
-            try? modelContext.save()
+    private func deleteAllRemindersWithoutSection() {
+        print("Usuwanie wszystkich przypomnień bez sekcji...")
+        remindersWithoutSection.forEach { reminder in
+            print("Usuwam: \(reminder.title)")
+            modelContext.delete(reminder)
+        }
+        do {
+            try modelContext.save()
+            print("Zapisano zmiany pomyślnie")
+        } catch {
+            print("Błąd zapisu: \(error.localizedDescription)")
         }
     }
     
-    private func disableSectionButton() -> Bool {
-        myList.sections.contains { $0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    private func confirmTempSection() {
+        guard let tempSection = tempSection else { return }
+        guard !tempSection.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            cancelTempSection()
+            return
+        }
+        
+        let newSection = ReminderSection(
+            title: tempSection.title,
+            sortOrder: myList.sections.count,
+            list: myList
+        )
+        
+        withAnimation {
+            myList.sections.append(newSection)
+            self.tempSection = nil
+        }
+    }
+    
+    private func cancelTempSection() {
+        withAnimation {
+            tempSection = nil
+        }
+    }
+    
+    private func autoSaveTempSection() {
+        guard let tempSection = tempSection else { return }
+        
+        if !tempSection.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            confirmTempSection()
+        } else {
+            cancelTempSection()
+        }
+    }
+    
+    private func createSectionFromOthers() {
+        let title = othersSectionName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+        
+        let newSection = ReminderSection(
+            title: title,
+            sortOrder: myList.sections.count,
+            list: myList
+        )
+        
+        remindersWithoutSection.forEach { $0.section = newSection }
+        
+        
+        withAnimation {
+            myList.sections.append(newSection)
+            
+            DispatchQueue.main.async {
+                othersSectionName = ""
+                modelContext.processPendingChanges()
+            }
+        }
+    }
+    
+    private func autoSaveOthersSection() {
+        guard !othersSectionName.isEmpty else { return }
+        createSectionFromOthers()
     }
 }
 
 
 
-struct MyListDetailScreenContainer: View {
-
-    @Query private var myLists: [MyList]
-
-    var body: some View {
-        ListDetailScreen(myList: myLists[0])
-    }
-}
+@MainActor
+var previewContainer: ModelContainer = {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: MyList.self, Reminder.self, ReminderSection.self, configurations: config)
+    let list = SampleDataLists.previewList
+    container.mainContext.insert(list)
+    return container
+}()
 
 #Preview { @MainActor in
     NavigationStack {
-        MyListDetailScreenContainer()
+        ListDetailScreen(myList: SampleDataLists.previewList)
     }
-    .modelContainer(mockPreviewConteiner)
+    .modelContainer(previewContainer)
 }
+
 
 
 
