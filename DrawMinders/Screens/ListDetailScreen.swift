@@ -12,7 +12,7 @@ struct ListDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.scenePhase) private var scenePhase
-    @Query private var allReminders: [Reminder]
+    
 
     @Bindable var myList: MyList
     @State private var isReminderAlertPresented: Bool = false
@@ -23,7 +23,7 @@ struct ListDetailScreen: View {
     @State private var othersSectionName: String = ""
 
     private var remindersWithoutSection: [Reminder] {
-        allReminders.filter { $0.section == nil && $0.list?.id == myList.id }
+        myList.reminders.filter { $0.section == nil }
     }
 
     var body: some View {
@@ -138,7 +138,8 @@ struct ListDetailScreen: View {
     }
     
     private func deleteSection(_ section: ReminderSection) {
-        myList.sections.removeAll { $0.id == section.id }
+        modelContext.delete(section)
+        try? modelContext.save()
     }
     
     private func deleteAllRemindersWithoutSection() {

@@ -13,10 +13,10 @@ class ReminderSection {
     @Attribute(.unique) var uuid: UUID
     var title: String
     var sortOrder: Int
-    
+    @Relationship(deleteRule: .cascade, inverse: \Reminder.section)
     var reminders: [Reminder] = []
     
-    @Relationship
+   
     var list: MyList?
     
     init(uuid: UUID = UUID(), title: String, sortOrder: Int = 0, list: MyList? = nil) {

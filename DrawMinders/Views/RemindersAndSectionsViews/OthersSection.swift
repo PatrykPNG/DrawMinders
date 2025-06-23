@@ -12,6 +12,7 @@ import SwiftData
 
 struct OthersSection: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
     let reminders: [Reminder]
     let onDelete: () -> Void
     @Binding var selectedReminderId: PersistentIdentifier?
@@ -19,6 +20,8 @@ struct OthersSection: View {
     var onCreate: () -> Void
     
     @State private var isExpanded: Bool = true
+    
+    @State private var isTargeted: Bool = false
 
     var body: some View {
         DisclosureGroup(
@@ -53,9 +56,47 @@ struct OthersSection: View {
                 }
             }
         )
-        .padding(.leading)
-        .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+              .fill(
+                  colorScheme == .dark ?
+                  (isTargeted ? Color.gray.opacity(0.3) : Color.black) :
+                  (isTargeted ? Color.gray.opacity(0.1) : Color.white)
+              )
+        )
+        .dropDestination(for: Data.self) { droppedData, location in
+            for data in droppedData {
+                guard
+                    let uuidString = String(data: data, encoding: .utf8),
+                    let uuid = UUID(uuidString: uuidString),
+                    let reminder = fetchReminder(by: uuid)
+                else { continue }
+                
+                // Ustaw sekcję na nil, aby przypomnienie trafiło do "Others"
+                reminder.section = nil
+            }
+            
+            do {
+                try modelContext.save()
+                return true
+            } catch {
+                print("Błąd zapisu: \(error)")
+                return false
+            }
+        } isTargeted: { isTargeted in
+            withAnimation {
+                self.isTargeted = isTargeted
+            }
+        }
     }
+    
+    private func fetchReminder(by uuid: UUID) -> Reminder? {
+       let predicate = #Predicate<Reminder> { $0.uuid == uuid }
+       let descriptor = FetchDescriptor(predicate: predicate)
+       return try? modelContext.fetch(descriptor).first
+   }
 }
 
 #Preview {

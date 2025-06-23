@@ -11,7 +11,7 @@ import PencilKit
 import UniformTypeIdentifiers
 
 @Model
-final class Reminder: Codable, Transferable {
+final class Reminder {
     var uuid: UUID
     var title: String = ""
     var isCompleted: Bool
@@ -20,8 +20,9 @@ final class Reminder: Codable, Transferable {
     var reminderTime: Date?
     var isFlagged: Bool
     var isEmpty: Bool = false
+   
     var list: MyList?
-    @Relationship
+  
     var section: ReminderSection?
     @Attribute var reminderOrder: Int
     
@@ -44,43 +45,24 @@ final class Reminder: Codable, Transferable {
         self.section = section
         self.reminderOrder = reminderOrder
     }
-    
-    enum CodingKeys: String, CodingKey {
-        case uuid, title, isCompleted, notes, reminderDate, reminderTime, isFlagged, isEmpty, reminderOrder
-    }
-    
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        uuid = try container.decode(UUID.self, forKey: .uuid)
-        title = try container.decode(String.self, forKey: .title)
-        isCompleted = try container.decode(Bool.self, forKey: .isCompleted)
-        notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        reminderDate = try container.decodeIfPresent(Date.self, forKey: .reminderDate)
-        reminderTime = try container.decodeIfPresent(Date.self, forKey: .reminderTime)
-        isFlagged = try container.decode(Bool.self, forKey: .isFlagged)
-        isEmpty = try container.decode(Bool.self, forKey: .isEmpty)
-        reminderOrder = try container.decode(Int.self, forKey: .reminderOrder)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(uuid, forKey: .uuid)
-        try container.encode(title, forKey: .title)
-        try container.encode(isCompleted, forKey: .isCompleted)
-        try container.encodeIfPresent(notes, forKey: .notes)
-        try container.encodeIfPresent(reminderDate, forKey: .reminderDate)
-        try container.encodeIfPresent(reminderTime, forKey: .reminderTime)
-        try container.encode(isFlagged, forKey: .isFlagged)
-        try container.encode(isEmpty, forKey: .isEmpty)
-        try container.encode(reminderOrder, forKey: .reminderOrder)
-    }
-    
-    static var transferRepresentation: some TransferRepresentation {
-        CodableRepresentation(contentType: .reminder)
-    }
 }
 
 extension UTType {
     static let reminder = UTType("com.patrykostrowski.reminder")!
 }
 
+extension Reminder {
+    var itemProvider: NSItemProvider {
+        let provider = NSItemProvider()
+        provider.registerDataRepresentation(
+            forTypeIdentifier: UTType.reminder.identifier,
+            visibility: .all
+        ) { completion in
+            // Przekazujemy tylko UUID (lub inne potrzebne dane)
+            let data = self.uuid.uuidString.data(using: .utf8)
+            completion(data, nil)
+            return nil
+        }
+        return provider
+    }
+}

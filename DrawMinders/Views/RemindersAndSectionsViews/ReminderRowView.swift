@@ -103,7 +103,9 @@ struct ReminderRowView: View {
                     }
                 }
             }
-            .draggable(reminder)
+            .onDrag {
+                reminder.itemProvider
+            }
             .contentShape(Rectangle())
             .onTapGesture {
                 selectedReminderId = reminder.persistentModelID

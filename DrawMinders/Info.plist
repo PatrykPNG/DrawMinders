@@ -18,7 +18,9 @@
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
-				<array/>
+				<array>
+					<string>reminder</string>
+				</array>
 			</dict>
 		</dict>
 	</array>

@@ -24,6 +24,10 @@ struct ExpandableSectionView: View {
             DisclosureGroup(
                 isExpanded: $isExpanded,
                 content: {
+                    Button("delete section") {
+                        onDelete()
+                    }
+                    .buttonStyle(.bordered)
                     ForEach(section.reminders) { reminder in
                         ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
                         Divider()
@@ -51,16 +55,34 @@ struct ExpandableSectionView: View {
                   (isTargeted ? Color.gray.opacity(0.1) : Color.white)
               )
         )
-        .dropDestination(for: Reminder.self) { items, _ in
-            for reminder in items {
-                reminder.section = section
+        .dropDestination(for: Data.self) { droppedData, location in
+            guard
+                let data = droppedData.first, // pobierz dane
+                let uuidString = String(data: data, encoding: .utf8), // konwertuj na String
+                let uuid = UUID(uuidString: uuidString), // konwertuj na UUID
+                let reminder = fetchReminder(by: uuid) // znajdz w bazie
+            else { return false }
+            
+            reminder.section = section // zaktualizuj sekcje
+            
+            do {
+                try modelContext.save()
+                return true
+            } catch {
+                print("Błąd zapisu: \(error)")
+                return false
             }
-            return true
         } isTargeted: { isTargeted in
             withAnimation {
                 self.isTargeted = isTargeted
             }
         }   
+    }
+    
+    private func fetchReminder(by uuid: UUID) -> Reminder? {
+        let predicate = #Predicate<Reminder> { $0.uuid == uuid }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        return try? modelContext.fetch(descriptor).first
     }
 }
 

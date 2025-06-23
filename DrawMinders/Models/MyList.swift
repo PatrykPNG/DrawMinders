@@ -17,12 +17,11 @@ class MyList {
     var symbol: String
     var isPinned: Bool
     @Attribute var sortOrder: Int
-    
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \Reminder.list)
     var reminders: [Reminder] = []
     
-    @Relationship(deleteRule: .cascade)
-    var sections: [ReminderSection] = [] 
+    @Relationship(deleteRule: .cascade, inverse: \ReminderSection.list)
+    var sections: [ReminderSection] = []
     
     
     init(uuid: UUID = UUID(), name: String, hexColor: String, symbol: String, isPinned: Bool = false, sortOrder: Int = 0) {
