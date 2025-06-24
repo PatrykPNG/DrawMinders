@@ -35,6 +35,15 @@ struct EditableSectionHeader: View {
                         validateTitle()
                     }
                 }
+            
+            Spacer()
+            Button("delete section") {
+                onDelete()
+            }
+            .buttonStyle(.bordered)
+            Spacer()
+            
+            Text("boze")
         }
         .padding(.vertical)
         .contentShape(Rectangle())

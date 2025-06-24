@@ -17,7 +17,7 @@ struct MyListsSectionView: View {
     let container: ListsContainer
     
     var body: some View {
-        // przyblizona wartosc wiersza DO POPRAWY
+        // przyblizona wartosc wiersza DO POPRAWY geometryReader
         let rowHeight: CGFloat = 95
         let listHeight = CGFloat(container.unpinnedLists.count) * rowHeight
         

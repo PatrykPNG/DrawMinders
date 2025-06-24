@@ -20,21 +20,53 @@ struct ExpandableSectionView: View {
     @State private var isTargeted: Bool = false
 
     var body: some View {
+        let rowHeight: CGFloat = 95
+        let listHeight = CGFloat(section.reminders.count) * rowHeight
         VStack {
             DisclosureGroup(
                 isExpanded: $isExpanded,
                 content: {
-                    Button("delete section") {
-                        onDelete()
-                    }
-                    .buttonStyle(.bordered)
-                    ForEach(section.reminders) { reminder in
-                        ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
-                        Divider()
-                            .frame(height: 1)
-                            .frame(maxWidth: .infinity)
-                            .background(Color(UIColor.separator))
-                            .padding(.leading, 30)
+                    ZStack(alignment: .top) {
+                        List {
+                            ForEach(section.reminders) { reminder in
+                                ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+                            }
+                            .onMove { indices, newOffset in
+                                section.reminders.move(fromOffsets: indices, toOffset: newOffset)
+                            }
+                            .listRowBackground(Color.purple.opacity(0.3))
+                        }
+                        .frame(height: listHeight)
+                        .scrollDisabled(true)
+                        
+                        Color.clear
+                            .background(isTargeted ? Color.red.opacity(0.3) : Color.clear)
+                            .contentShape(Rectangle())
+                            .frame(height: listHeight)
+                            .allowsHitTesting(isTargeted)
+                            .zIndex(1)
+                            .dropDestination(for: Data.self) { droppedData, location in
+                                guard
+                                    let data = droppedData.first, // pobierz dane
+                                    let uuidString = String(data: data, encoding: .utf8), // konwertuj na String
+                                    let uuid = UUID(uuidString: uuidString), // konwertuj na UUID
+                                    let reminder = fetchReminder(by: uuid) // znajdz w bazie
+                                else { return false }
+                                
+                                reminder.section = section // zaktualizuj sekcje
+                                
+                                do {
+                                    try modelContext.save()
+                                    return true
+                                } catch {
+                                    print("Błąd zapisu: \(error)")
+                                    return false
+                                }
+                            } isTargeted: { isTargeted in
+                                withAnimation {
+                                    self.isTargeted = isTargeted
+                                }
+                            }
                     }
                 },
                 label: {
@@ -113,3 +145,4 @@ struct ExpandableSectionView: View {
     
     return PreviewWrapper()
 }
+

@@ -110,11 +110,11 @@ struct ReminderRowView: View {
             .onTapGesture {
                 selectedReminderId = reminder.persistentModelID
             }
-//            .swipeActions {
-//                Button("Test") {
-//                    
-//                }
-//            }
+            .swipeActions {
+                Button("Test") {
+                    
+                }
+            }
         }
         
     private func handleCirclePress() {
