@@ -10,10 +10,14 @@ import SwiftData
 
 
 struct ReminderRowView: View {
+    @EnvironmentObject private var dragState: DragState
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
 
     @Bindable var reminder: Reminder
     @Binding var selectedReminderId: PersistentIdentifier?
+    
+    let sectionId: UUID?
     
     @State private var completionProgress: Double = 0
     @State private var completionTimer: Timer?
@@ -103,15 +107,25 @@ struct ReminderRowView: View {
                     }
                 }
             }
-            .onDrag {
-                reminder.itemProvider
-            }
             .contentShape(Rectangle())
+            .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
+            .onDrag {
+                dragState.reset()
+                if let sectionId = sectionId {
+                    dragState.setSource(sectionId)
+                }
+                return reminder.itemProvider
+            }
             .onTapGesture {
                 selectedReminderId = reminder.persistentModelID
             }
             .swipeActions {
                 Button("Test") {
+                    
+                }
+            }
+            .contextMenu {
+                Button("sas") {
                     
                 }
             }
@@ -164,10 +178,11 @@ struct ReminderRowView: View {
 struct ReminderRowViewContainer: View {
 
     @Query private var reminders: [Reminder]
+    let sectionId: UUID? = nil
     @State private var selectedReminderId: PersistentIdentifier? = nil
 
     var body: some View {
-        ReminderRowView(reminder: reminders[0], selectedReminderId: $selectedReminderId)
+        ReminderRowView(reminder: reminders[0], selectedReminderId: $selectedReminderId, sectionId: sectionId)
     }
 }
 

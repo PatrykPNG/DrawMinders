@@ -13,7 +13,6 @@ struct ListDetailScreen: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.scenePhase) private var scenePhase
     
-
     @Bindable var myList: MyList
     @State private var isReminderAlertPresented: Bool = false
     @State private var selectedReminderId: PersistentIdentifier? = nil
@@ -21,6 +20,8 @@ struct ListDetailScreen: View {
     @State private var isEditingTempSection = false
     
     @State private var othersSectionName: String = ""
+    
+    @StateObject private var dragState = DragState()
 
     private var remindersWithoutSection: [Reminder] {
         myList.reminders.filter { $0.section == nil }
@@ -67,6 +68,7 @@ struct ListDetailScreen: View {
                 }
             }
         }
+        .environmentObject(dragState)
         .edgesIgnoringSafeArea(.horizontal)
         .navigationTitle(myList.name)
         .navigationBarTitleDisplayMode(.large)
@@ -101,7 +103,7 @@ struct ListDetailScreen: View {
     
     private var remindersWithoutSectionBlock: some View {
         ForEach(remindersWithoutSection) { reminder in
-            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+            ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId, sectionId: nil)
             Divider()
                 .frame(height: 1)
                 .frame(maxWidth: .infinity)
@@ -120,6 +122,7 @@ struct ListDetailScreen: View {
                 onDelete: { deleteSection(section) },
                 selectedReminderId: $selectedReminderId
             )
+            .environmentObject(dragState)
             Divider()
                 .frame(height: 2)
                 .frame(maxWidth: .infinity)

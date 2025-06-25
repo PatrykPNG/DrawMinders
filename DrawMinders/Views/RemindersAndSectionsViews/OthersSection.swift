@@ -22,13 +22,14 @@ struct OthersSection: View {
     @State private var isExpanded: Bool = true
     
     @State private var isTargeted: Bool = false
+    @State private var othersSectionId = UUID()
 
     var body: some View {
         DisclosureGroup(
             isExpanded: $isExpanded,
             content: {
                 ForEach(reminders) { reminder in
-                    ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId)
+                    ReminderRowView(reminder: reminder, selectedReminderId: $selectedReminderId, sectionId: othersSectionId)
                 }
             },
             label: {
