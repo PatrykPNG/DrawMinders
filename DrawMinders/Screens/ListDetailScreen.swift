@@ -27,18 +27,31 @@ struct ListDetailScreen: View {
         myList.reminders.filter { $0.section == nil }
     }
 
+    private var totalSectionsHeight: CGFloat {
+        return myList.sections.reduce(0) { total, section in
+            let headerHeight: CGFloat = 34.33
+            
+            let contentHeight: CGFloat = section.isExpanded ?
+            (CGFloat(section.reminders.count) * 44.0) : 5.0
+            
+            let spacing: CGFloat = section.isExpanded ? 10.65 : 0
+            
+            let bottomDividerHeight: CGFloat = 2.0
+            
+            return total + headerHeight + contentHeight + spacing + bottomDividerHeight
+        }
+    }
+    
     var body: some View {
-  
-        
         ScrollView {
-            LazyVStack {
+            LazyVStack(spacing: 0) {
                 // Tutaj tymczasowa sekcja
                 if let tempSection = tempSection {
                     Divider()
                         .frame(height: 2)
                         .frame(maxWidth: .infinity)
                         .background(Color(UIColor.separator))
-
+                    
                     TempSectionRow(
                         section: tempSection,
                         onCommit: confirmTempSection,
@@ -53,7 +66,11 @@ struct ListDetailScreen: View {
                 }
                 // Przypadki gdy są sekcje
                 else {
-                    sectionsBlock
+                    VStack(spacing: 0) {
+                        sectionsBlock
+                        
+                        fullWidthDivider
+                    }
                     
                     // Dodatkowe przypomnienia bez sekcji (gdy istnieją)
                     if !remindersWithoutSection.isEmpty {
@@ -69,12 +86,8 @@ struct ListDetailScreen: View {
             }
         }
         .environmentObject(dragState)
-        .edgesIgnoringSafeArea(.horizontal)
         .navigationTitle(myList.name)
         .navigationBarTitleDisplayMode(.large)
-        .contentMargins(.horizontal, 0)
-        .scrollContentBackground(.hidden)
-//        .listStyle(.sidebar)
         .onDisappear {
             autoSaveTempSection()
             autoSaveOthersSection()
@@ -116,17 +129,45 @@ struct ListDetailScreen: View {
     }
     
     private var sectionsBlock: some View {
-        ForEach(myList.sections.sorted(by: { $0.sortOrder < $1.sortOrder })) { section in
-            ExpandableSectionView(
-                section: section,
-                onDelete: { deleteSection(section) },
-                selectedReminderId: $selectedReminderId
-            )
-            .environmentObject(dragState)
-            Divider()
-                .frame(height: 2)
-                .frame(maxWidth: .infinity)
-                .background(Color(UIColor.separator))
+        List {
+            ForEach(myList.sections.sorted(by: { $0.sortOrder < $1.sortOrder })) { section in
+                VStack(spacing: 0) {
+                    ExpandableSectionView(
+                        section: section,
+                        onDelete: { deleteSection(section) },
+                        selectedReminderId: $selectedReminderId
+                    )
+                    .environmentObject(dragState)
+                    
+                    fullWidthDivider
+                }
+                .listRowBackground(colorScheme == .dark ? Color.black : Color.white)
+                .listRowInsets(EdgeInsets(top: 3, leading: 10, bottom: 0, trailing: 10))
+                .listRowSeparator(.hidden)
+            }
+            .onMove(perform: moveSections)
+        }
+        .frame(height: totalSectionsHeight)
+        .scrollDisabled(true)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(colorScheme == .dark ? Color.black : Color.white)
+    }
+    
+    private var fullWidthDivider: some View {
+        Divider()
+            .frame(height: 2)
+            .overlay(Color(UIColor.separator))
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, -16)
+    }
+    
+    private func moveSections(from source: IndexSet, to destination: Int) {
+        var sortedSections = myList.sections.sorted(by: { $0.sortOrder < $1.sortOrder })
+        sortedSections.move(fromOffsets: source, toOffset: destination)
+        
+        for (index, section) in sortedSections.enumerated() {
+            section.sortOrder = index
         }
     }
     

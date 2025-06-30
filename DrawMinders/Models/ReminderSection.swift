@@ -16,13 +16,14 @@ class ReminderSection {
     @Relationship(deleteRule: .cascade, inverse: \Reminder.section)
     var reminders: [Reminder] = []
     
-   
+    var isExpanded: Bool = true
     var list: MyList?
     
-    init(uuid: UUID = UUID(), title: String, sortOrder: Int = 0, list: MyList? = nil) {
+    init(uuid: UUID = UUID(), title: String, sortOrder: Int = 0, isExpanded: Bool = true, list: MyList? = nil) {
         self.uuid = uuid
         self.title = title
         self.sortOrder = sortOrder
+        self.isExpanded = isExpanded
         self.list = list
     }
 

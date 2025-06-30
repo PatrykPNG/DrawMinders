@@ -9,18 +9,24 @@ import SwiftUI
 
 class DragState: ObservableObject {
     @Published var activeDragSource: UUID?
+    @Published var isDragging: Bool = false
+    @Published var draggedReminderId: UUID?
     
-    func setSource(_ id: UUID) {
+    func setSource(_ id: UUID, reminderId: UUID? = nil) {
         activeDragSource = id
+        draggedReminderId = reminderId
+        isDragging = true
     }
     
     func reset() {
         activeDragSource = nil
+        draggedReminderId = nil
+        isDragging = false
     }
 }
 
 extension DragState {
     func shouldHighlight(for sectionId: UUID) -> Bool {
-        activeDragSource != sectionId
+        isDragging && activeDragSource != sectionId
     }
 }

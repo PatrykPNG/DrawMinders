@@ -45,7 +45,15 @@ struct EditableSectionHeader: View {
             
             Text("boze")
         }
-        .padding(.vertical)
+        .background(
+            GeometryReader { geometry in
+                Color.clear
+                    .onAppear {
+                        print("📏 EditableSectionHeader height: \(geometry.size.height)")
+                        print("📏 Header for section: '\(section.title)'")
+                    }
+            }
+        )
         .contentShape(Rectangle())
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
@@ -54,6 +62,13 @@ struct EditableSectionHeader: View {
                 Label("Delete", systemImage: "trash")
             }
         }
+        .background(
+            GeometryReader { geometry in
+                Color.clear.onAppear {
+                    print("📏 EditableSectionHeader height: \(geometry.size.height)")
+                }
+            }
+        )
     }
     
     private func validateTitle() {

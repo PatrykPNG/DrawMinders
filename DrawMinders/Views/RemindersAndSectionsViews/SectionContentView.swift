@@ -9,81 +9,36 @@ import SwiftUI
 import SwiftData
 
 struct SectionContentView: View {
-    @EnvironmentObject private var dragState: DragState
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     @Bindable var section: ReminderSection
     @Binding var selectedReminderId: PersistentIdentifier?
     @Binding var isTargeted: Bool
     
-    let rowHeight: CGFloat = 95
+    private let rowHeight: CGFloat = 44.0
     var listHeight: CGFloat {
         CGFloat(section.reminders.count) * rowHeight
     }
 
     var body: some View {
-        let shouldHighlight = isTargeted && dragState.activeDragSource != section.uuid
-        ZStack(alignment: .top) {
-            
-            List {
-                ForEach(section.reminders) { reminder in
-                    ReminderRowView(
-                        reminder: reminder,
-                        selectedReminderId: $selectedReminderId,
-                        sectionId: section.uuid
-                    )
-                }
-                .onMove { indices, newOffset in
-                    section.reminders.move(fromOffsets: indices, toOffset: newOffset)
-                }
+        List {
+            ForEach(section.reminders) { reminder in
+                ReminderRowView(
+                    reminder: reminder,
+                    selectedReminderId: $selectedReminderId,
+                    sectionId: section.uuid
+                )
             }
-            .frame(height: listHeight)
-            .scrollDisabled(true)
-            .listStyle(.plain)
-            .background(colorScheme == .dark ? Color.black : Color.white)
-            
-            Color.clear
-                .background(shouldHighlight ? Color.gray.opacity(0.3) : .clear)
-                .contentShape(Rectangle())
-                .frame(height: listHeight)
-                .allowsHitTesting(isTargeted && dragState.activeDragSource != section.uuid)
-                .zIndex(1)
-                .dropDestination(for: Data.self) { droppedData, location in
-                    handleDrop(droppedData: droppedData)
-                } isTargeted: { isTargeted in
-                   
-                        self.isTargeted = isTargeted
-                  
-                }
+            .onMove { indices, newOffset in
+                section.reminders.move(fromOffsets: indices, toOffset: newOffset)
+            }
+            .listRowInsets(EdgeInsets())
         }
+        .frame(height: listHeight)
+        .scrollDisabled(true)
+        .listStyle(.plain)
+        .background(colorScheme == .dark ? Color.black : Color.white)
     }
-    
-    private func handleDrop(droppedData: [Data]) -> Bool {
-        guard
-            let data = droppedData.first,
-            let uuidString = String(data: data, encoding: .utf8),
-            let uuid = UUID(uuidString: uuidString),
-            let reminder = fetchReminder(by: uuid)
-        else { return false }
-        
-        reminder.section = section
-        dragState.reset()
-        
-        do {
-            try modelContext.save()
-            return true
-        } catch {
-            print("Błąd zapisu: \(error)")
-            return false
-        }
-    }
-    
-    private func fetchReminder(by uuid: UUID) -> Reminder? {
-        let predicate = #Predicate<Reminder> { $0.uuid == uuid }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return try? modelContext.fetch(descriptor).first
-    }
-    
 }
 
 
@@ -112,3 +67,6 @@ struct SectionContentView: View {
     
     return PreviewWrapper()
 }
+
+
+

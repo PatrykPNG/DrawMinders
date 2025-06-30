@@ -16,49 +16,42 @@ struct ExpandableSectionView: View {
     let onDelete: () -> Void
     @Binding var selectedReminderId: PersistentIdentifier?
 
-    @State private var isExpanded: Bool = true
     @State private var isTargeted: Bool = false
-
+  
     var body: some View {
-        VStack {
-            DisclosureGroup(
-                isExpanded: $isExpanded,
-                content: {
-                    SectionContentView(
-                        section: section,
-                        selectedReminderId: $selectedReminderId,
-                        isTargeted: $isTargeted
-                    )
-                },
-                label: {
-                    EditableSectionHeader(
-                        section: section,
-                        onDelete: onDelete
-                    )
-                }
-            )
+        ZStack {
+            VStack {
+                DisclosureGroup(
+                    isExpanded: $section.isExpanded, // Use the model property
+                    content: {
+                        SectionContentView(
+                            section: section,
+                            selectedReminderId: $selectedReminderId,
+                            isTargeted: $isTargeted
+                        )
+                    },
+                    label: {
+                        EditableSectionHeader(
+                            section: section,
+                            onDelete: onDelete
+                        )
+                    }
+                )
+            }
+            
+            if dragState.shouldHighlight(for: section.uuid) {
+                DropTargetOverlay(isTargeted: isTargeted)
+                    .allowsHitTesting(true)
+                    .zIndex(1)
+                    .dropDestination(for: Data.self) { droppedData, location in
+                        handleSectionDrop(droppedData: droppedData)
+                    } isTargeted: { targeted in
+                        withAnimation {
+                            self.isTargeted = targeted
+                        }
+                    }
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(backgroundView)
-        .dropDestination(for: Data.self) { droppedData, location in
-            handleSectionDrop(droppedData: droppedData)
-        } isTargeted: { isTargeted in
-            
-                self.isTargeted = isTargeted
-            
-        }   
-    }
-    
-    private var backgroundView: some View {
-        let shouldHighlight = isTargeted && dragState.activeDragSource != section.uuid
-        
-        return RoundedRectangle(cornerRadius: 12)
-            .fill(
-                colorScheme == .dark ?
-                (shouldHighlight ? Color.gray.opacity(0.3) : Color.black) :
-                (shouldHighlight ? Color.gray.opacity(0.3) : Color.white)
-            )
     }
         
     private func handleSectionDrop(droppedData: [Data]) -> Bool {
@@ -67,19 +60,39 @@ struct ExpandableSectionView: View {
             let uuidString = String(data: data, encoding: .utf8),
             let uuid = UUID(uuidString: uuidString),
             let reminder = fetchReminder(by: uuid)
-        else { return false }
+        else {
+            print("DROP: Failed to parse drop data")
+            return false
+        }
+        
+        let oldSection = reminder.section
+ 
+        if let oldSection = oldSection {
+            oldSection.reminders.removeAll { $0.uuid == reminder.uuid }
+        }
         
         reminder.section = section
+        section.reminders.append(reminder)
+        
         dragState.reset()
         
         do {
             try modelContext.save()
+            print("DROP: ModelContext saved successfully")
+            
+            // Force SwiftData to process changes
+            DispatchQueue.main.async {
+                modelContext.processPendingChanges()
+            }
+            
             return true
         } catch {
-            print("Błąd zapisu: \(error)")
+            print("DROP: Save failed: \(error)")
             return false
         }
     }
+
+
     
     private func fetchReminder(by uuid: UUID) -> Reminder? {
         let predicate = #Predicate<Reminder> { $0.uuid == uuid }
@@ -89,12 +102,10 @@ struct ExpandableSectionView: View {
 }
 
 
-
-
 #Preview {
     struct PreviewWrapper: View {
         @State private var selectedReminderId: PersistentIdentifier? = nil
-        @FocusState private var focusedSectionID: UUID?
+        @StateObject private var dragState = DragState()
         
         let section: ReminderSection = {
             let section = ReminderSection(title: "Testowa sekcja")
@@ -110,9 +121,12 @@ struct ExpandableSectionView: View {
                 onDelete: {},
                 selectedReminderId: $selectedReminderId
             )
+            .environmentObject(dragState)
         }
     }
     
     return PreviewWrapper()
 }
+
+
 
